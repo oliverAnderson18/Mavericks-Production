@@ -1,0 +1,31 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Dependencias locales descargadas
+.ml_deps/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Resultados generados
+output/
+scrap_ml/artifacts/
+scrap_ml/artifacts_improved/
+scrap_ml/artifacts_machine_system/
+scrap_ml/artifacts_correction_study/
+
+# Archivos temporales
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Datos locales
+data/

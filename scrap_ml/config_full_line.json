@@ -1,0 +1,75 @@
+{
+  "random_seed": 42,
+  "nominal_speed_m_min": 6.0,
+  "history_minutes": 15,
+  "feature_availability_delay_minutes": 1,
+  "stages": {
+    "MIX": {"sequence": 1, "label": "Mezcladora", "lead_minutes": 23, "role": "prediction", "timing": "documented_chain"},
+    "DST": {"sequence": 2, "label": "Distribuidor", "lead_minutes": 16, "role": "prediction", "timing": "assumed_inside_8min_buffer"},
+    "MLD": {"sequence": 3, "label": "Moldeadora", "lead_minutes": 15, "role": "prediction", "timing": "documented_chain"},
+    "CAM_PRE": {"sequence": 4, "label": "Camara antes del horno", "lead_minutes": 14, "role": "prediction", "timing": "documented_chain"},
+    "OVN": {"sequence": 5, "label": "Horno", "lead_minutes": 14, "role": "prediction", "timing": "assumed_same_minute_as_CAM_PRE"},
+    "BCL": {"sequence": 6, "label": "Enfriador de galleta", "lead_minutes": 8, "role": "prediction", "timing": "derived_6min_bake_3min_cool"},
+    "CAM_POST": {"sequence": 7, "label": "Camara despues del horno", "lead_minutes": 5, "role": "prediction", "timing": "documented_chain"},
+    "BCM": {"sequence": 8, "label": "Aplicador de crema", "lead_minutes": 5, "role": "prediction", "timing": "assumed_same_minute_as_CAM_POST"},
+    "BCR": {"sequence": 9, "label": "Enfriador de crema", "lead_minutes": 4, "role": "prediction", "timing": "assumed_inside_3min_layering"},
+    "CAR": {"sequence": 10, "label": "Aplicador de caramelo", "lead_minutes": 3, "role": "prediction", "timing": "assumed_inside_3min_layering"},
+    "GUI": {"sequence": 11, "label": "Guillotina", "lead_minutes": 2, "role": "prediction", "timing": "documented_chain"},
+    "LSR_CORE": {"sequence": 12, "label": "Laser del nucleo", "lead_minutes": 2, "role": "prediction", "timing": "documented_chain"},
+    "ENR": {"sequence": 13, "label": "Bano de chocolate", "lead_minutes": 1, "role": "prediction", "timing": "assumed_inside_2min_coating", "allow_early_discard": false},
+    "LSR_BAR": {"sequence": 14, "label": "Laser final", "lead_minutes": 0, "role": "observed_final_rejection", "timing": "observed_target"},
+    "CCL": {"sequence": 15, "label": "Enfriador final", "lead_minutes": -2, "role": "no_new_quality_label", "timing": "assumed_lifecycle_time_only"}
+  },
+  "splits": {
+    "calibration_start": "2026-08-31",
+    "selection_start": "2026-09-07",
+    "test_start": "2026-09-21"
+  },
+  "model": {
+    "max_iter": 180,
+    "max_leaf_nodes": 31,
+    "learning_rate": 0.07,
+    "min_samples_leaf": 100,
+    "l2_regularization": 2.0,
+    "max_bins": 127
+  },
+  "policy_selection": {
+    "risk_safety_margins": [0.0, 0.05, 0.1, 0.2],
+    "minimum_validation_net_usd": 0.0,
+    "allow_continue_all": true
+  },
+  "economics": {
+    "confirmed_by_business": false,
+    "avoidable_future_cost_usd": {},
+    "false_reject_loss_usd": null,
+    "extra_disposal_cost_per_piece_usd": 0.0
+  },
+  "scenario_assumptions": {
+    "final_material_value_usd_per_piece": 0.17501629464285715,
+    "extra_disposal_cost_per_piece_usd": 0.002,
+    "accumulated_material_proxy_usd": {
+      "MIX": 0.017585565476190477,
+      "DST": 0.017585565476190477,
+      "MLD": 0.017585565476190477,
+      "CAM_PRE": 0.017585565476190477,
+      "OVN": 0.017585565476190477,
+      "BCL": 0.017585565476190477,
+      "CAM_POST": 0.017585565476190477,
+      "BCM": 0.05002901785714286,
+      "BCR": 0.05002901785714286,
+      "CAR": 0.05002901785714286,
+      "GUI": 0.05002901785714286,
+      "LSR_CORE": 0.05002901785714286,
+      "ENR": 0.17501629464285715,
+      "LSR_BAR": 0.17501629464285715,
+      "CCL": 0.17501629464285715
+    },
+    "scenarios": {
+      "materiales": {"extra_good_piece_opportunity_loss_usd": 0.0},
+      "margen_005": {"extra_good_piece_opportunity_loss_usd": 0.05},
+      "margen_025": {"extra_good_piece_opportunity_loss_usd": 0.25}
+    },
+    "confirmed_by_business": false,
+    "notes": "Valores de scrap como proxies contables, no costes marginales acreditados. Antes de CAM_POST se imputa el coste de galleta horneada; en BCM/BCR/CAR el coste de nucleo completo. ENR ya no tiene ahorro material imputado. No se monetiza energia, mano de obra ni capacidad."
+  }
+}

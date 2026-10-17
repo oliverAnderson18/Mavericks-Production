@@ -1,0 +1,42 @@
+{
+  "version": "three_actions_v1",
+  "scenario": "materiales",
+  "quality_policy": {"safety_margin": 0.1, "disabled": false, "gate": "none"},
+  "execution_mode": "simulation",
+  "maximum_snapshot_age_minutes": 2,
+  "cohort_size_at_input": 1920,
+  "cohort_size_source": "nominal_capacity_assumption_not_final_label",
+  "transport_verified_by_operations": false,
+  "costs_confirmed_by_business": false,
+  "minimum_correction_advantage_usd": 0,
+  "line_correction_policy": {
+    "enabled": true,
+    "selection_stage": "CAM_POST",
+    "quality_alert_threshold": 0.05,
+    "response_horizon_minutes": 10,
+    "selection_rule": "threshold selected on validation before test; require an independent diagnostic machine flag",
+    "operator_confirmation_required": true,
+    "automatic_machine_actuation": false,
+    "savings_measure": "offline FIN_BAR excess cost at risk only; correction cost and intervention effect are not available"
+  },
+  "machines": {
+    "MIX": {}, "DST": {}, "MLD": {}, "OVN": {}, "BCL": {}, "BCM": {},
+    "BCR": {}, "CAR": {}, "GUI": {}, "ENR": {}, "CCL": {}
+  },
+  "capability_template": {
+    "approved_by_operations": false,
+    "can_hold_before_machine": null,
+    "response_minutes": null,
+    "adjustment_minutes": null,
+    "fixed_adjustment_cost_usd": null,
+    "downtime_cost_usd_per_minute": null,
+    "quality_check_cost_usd": null,
+    "effect": {
+      "validated": false,
+      "study_reference": null,
+      "reject_fraction_reduction_lower_bound": null,
+      "stages": [],
+      "valid_until": null
+    }
+  }
+}
