@@ -326,6 +326,22 @@ def finalize(data_dir):
     pred=pred[pred.stage.eq('CAM_POST')]
     sources=None
     test_events=events[(events.started_at>=pd.Timestamp('2026-09-21'))&events.machine_code.isin(MACHINES)&events.loss_type.ne('Setup')]
+    # Event-level detection complements minute metrics; no early prediction claim.
+    episodes=[]
+    for event in test_events.itertuples():
+        period=(scores.index>=event.started_at)&(scores.index<event.ended_at)
+        detected=period & any_flag.to_numpy() & winner.eq(event.machine_code).to_numpy()
+        hits=scores.index[detected]
+        episodes.append({'machine':event.machine_code, 'start':str(event.started_at),
+                         'detected':bool(len(hits)),
+                         'latency_minutes':float((hits[0]-event.started_at).total_seconds()/60+1) if len(hits) else None})
+    latencies=[e['latency_minutes'] for e in episodes if e['detected']]
+    summary['diagnosis']['event_level']={
+        'registered_test_events':len(episodes), 'events_with_correct_selected_machine':len(latencies),
+        'recall':len(latencies)/len(episodes) if episodes else None,
+        'median_detection_latency_minutes':float(np.median(latencies)) if latencies else None,
+        'diagnosis_of_active_events_not_prediction_of_future_breakdowns':True,
+        'events':episodes}
     for event in test_events.itertuples():
         candidates=pred[(pred.observation_minute>=event.started_at)&(pred.observation_minute<event.ended_at)]
         for row in candidates.itertuples():
