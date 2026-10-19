@@ -96,11 +96,7 @@ def make_handler(service, agent, static_dir=ROOT / "static"):
             except Exception as exc:
                 # No devolver respuestas crudas del proveedor, cabeceras o credenciales.
                 status = getattr(exc, "status_code", None)
-                message = {401: "OpenAI rejected the API key. Check OPENAI_API_KEY on the server.",
-                           403: "This account cannot access the selected OpenAI model.",
-                           404: "Model unavailable. Check OPENAI_MODEL on the server.",
-                           429: "OpenAI usage or credit limit reached. Check the account and try again."}.get(status,
-                           "Request failed. Check the server connection, SDK and logs.")
+                message = "Request failed. Check the local server and Ollama logs."
                 self.log_error("Fallo %s (status=%s)", type(exc).__name__, status)
                 self.send_json(502 if status else 500, {"error": message})
 

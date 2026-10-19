@@ -11,5 +11,4 @@ ipykernel==7.4.0
 jupyterlab==4.6.4
 reportlab>=4.4,<5
 
-# Asistente SMED de limpieza
-openai>=2.0.0,<3
+# Asistente SMED: Ollama local, sin SDK Python ni clave API.

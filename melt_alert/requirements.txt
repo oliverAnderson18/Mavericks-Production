@@ -1,1 +1,2 @@
-openai>=2.0.0,<3
+# Sin dependencias Python adicionales: Ollama se consulta con urllib (biblioteca estandar).
+# Instala la aplicacion Ollama y ejecuta: ollama pull qwen3:4b-instruct

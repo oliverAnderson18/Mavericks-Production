@@ -1,15 +1,15 @@
 import json
-import importlib.util
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from http.server import ThreadingHTTPServer
 
-from melt_alert.agent import CleaningAgent
+from melt_alert.agent import CleaningAgent, OllamaClient, AgentUnavailable
 from melt_alert.planner import ValidationError, economic_impact, make_plan, minute
 from melt_alert.server import make_handler
 from melt_alert.service import ConflictError, SmedService
@@ -161,33 +161,34 @@ class ServiceCase(unittest.TestCase):
         self.assertEqual(self.service.session(self.sid)["restarted_at"], "14:30")
 
     def test_agent_calls_real_tool_and_does_not_apply_proposal(self):
-        function = SimpleNamespace(type="function_call", name="proponer_avance", arguments=json.dumps({"action": "start_task", "task_id": "KIT_ENR", "note": "Preparacion"}), call_id="call_1")
+        function = {"function": {"name": "proponer_avance", "arguments": {"action": "start_task", "task_id": "KIT_ENR", "note": "Preparacion"}}}
         class Responses:
             def __init__(self): self.requests = []
-            def create(self, **kwargs):
+            def chat(self, **kwargs):
                 self.requests.append(kwargs)
                 if len(self.requests) == 1:
-                    return SimpleNamespace(output=[function], output_text="", status="completed")
-                self.output = kwargs["input"][-1]
-                return SimpleNamespace(output=[], output_text="Propuesta pendiente de confirmacion.", status="completed")
+                    return {"message": {"role": "assistant", "content": "", "tool_calls": [function]}, "done": True}
+                self.output = kwargs["messages"][-1]
+                return {"message": {"role": "assistant", "content": "Propuesta pendiente de confirmacion."}, "done": True}
         responses = Responses()
-        agent = CleaningAgent(self.service, client=SimpleNamespace(responses=responses))
+        agent = CleaningAgent(self.service, client=responses)
         reply = agent.ask(self.sid, "test", "Quiero iniciar el kit de ENR")
         self.assertEqual(len(reply["proposals"]), 1)
         self.assertEqual(self.service.session(self.sid)["tasks"], {})
-        self.assertTrue(json.loads(responses.output["output"])["requires_human_confirmation"])
-        self.assertFalse(responses.requests[0]["store"])
+        self.assertTrue(json.loads(responses.output["content"])["requires_human_confirmation"])
+        self.assertFalse(responses.requests[0]["stream"])
+        self.assertEqual(reply["provider"], "Ollama")
 
     def test_malformed_tool_arguments_are_reported_to_model(self):
         class Responses:
             def __init__(self): self.n = 0
-            def create(inner, **kwargs):
+            def chat(inner, **kwargs):
                 inner.n += 1
                 if inner.n == 1:
-                    return SimpleNamespace(output=[SimpleNamespace(type="function_call",name="simular_plan",arguments="{bad",call_id="bad")],output_text="",status="completed")
-                self.assertIn("error", json.loads(kwargs["input"][-1]["output"]))
-                return SimpleNamespace(output=[],output_text="Necesito corregir los argumentos.",status="completed")
-        result = CleaningAgent(self.service, client=SimpleNamespace(responses=Responses())).ask(self.sid,"bad","Compara planes")
+                    return {"message": {"role": "assistant", "tool_calls": [{"function": {"name": "simular_plan", "arguments": "{bad"}}]}, "done": True}
+                self.assertIn("error", json.loads(kwargs["messages"][-1]["content"]))
+                return {"message": {"role": "assistant", "content": "Necesito corregir los argumentos."}, "done": True}
+        result = CleaningAgent(self.service, client=Responses()).ask(self.sid,"bad","Compara planes")
         self.assertIn("error", result["tool_calls"][0]["summary"])
 
 
@@ -232,44 +233,80 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.service.session(self.sid)["tasks"],{})
 
 
-@unittest.skipUnless(importlib.util.find_spec("openai"), "SDK OpenAI opcional no instalado")
-class OpenAISdkContract(unittest.TestCase):
+class OllamaHttpContract(unittest.TestCase):
     def setUp(self):
         ServiceCase.setUp(self)
 
-    def test_sdk_serializes_tools_and_round_trip_with_mock_transport(self):
-        import httpx
-        from openai import OpenAI
+    def test_http_serializes_tools_and_round_trip(self):
+        from http.server import BaseHTTPRequestHandler
         requests = []
 
-        def handle(request):
-            body = json.loads(request.content)
-            requests.append(body)
-            self.assertEqual(request.url.path,"/v1/responses")
-            self.assertFalse(body["store"])
-            if len(requests) == 1:
-                self.assertTrue(all(t["strict"] for t in body["tools"]))
-                output = [{"type":"function_call","id":"fc_demo","call_id":"call_demo","name":"simular_plan",
-                           "arguments":json.dumps({"prepare_before_stop":True,"stop_at":None,"production_ready_at":None,
-                               "target_stop_minutes":None,"unavailable_resources":None,"delays":[]}),"status":"completed"}]
-            else:
-                outputs = [i for i in body["input"] if i.get("type") == "function_call_output"]
-                result = json.loads(outputs[-1]["output"])
-                self.assertTrue(result["feasible"])
-                self.assertEqual(result["earliest_restart"],"14:30")
-                output = [{"type":"message","id":"msg_demo","role":"assistant","status":"completed",
-                           "content":[{"type":"output_text","text":"Plan consultado: la disponibilidad mantiene el arranque a las 14:30.","annotations":[]}]}]
-            return httpx.Response(200,json={"id":"resp_demo_"+str(len(requests)),"object":"response",
-                "created_at":1,"status":"completed","model":"gpt-5.4-mini","output":output,
-                "parallel_tool_calls":False,"error":None,"incomplete_details":None,"metadata":{},
-                "tools":body["tools"],"tool_choice":"auto"})
-
-        with httpx.Client(transport=httpx.MockTransport(handle)) as transport:
-            client = OpenAI(api_key="unit-test-placeholder",base_url="https://unit-test.invalid/v1",http_client=transport)
-            result = CleaningAgent(self.service,client=client).ask(self.sid,"sdk","Prepara el paro")
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(*args): pass
+            def do_POST(inner):
+                body = json.loads(inner.rfile.read(int(inner.headers["Content-Length"])))
+                requests.append(body)
+                self.assertEqual(inner.path, "/api/chat")
+                self.assertNotIn("Authorization", inner.headers)
+                self.assertFalse(body["stream"])
+                if len(requests) == 1:
+                    self.assertTrue(all("function" in t for t in body["tools"]))
+                    message = {"role": "assistant", "content": "", "tool_calls": [{"function": {
+                        "name": "simular_plan", "arguments": {"prepare_before_stop": True,
+                        "stop_at": None, "production_ready_at": None, "target_stop_minutes": None,
+                        "unavailable_resources": None, "delays": []}}}]}
+                else:
+                    tool = body["messages"][-1]
+                    self.assertEqual(tool["role"], "tool")
+                    result = json.loads(tool["content"])
+                    self.assertTrue(result["feasible"])
+                    self.assertEqual(result["earliest_restart"], "14:30")
+                    message = {"role": "assistant", "content": "Plan consultado: arranque a las 14:30."}
+                data = json.dumps({"message": message, "done": True, "done_reason": "stop"}).encode()
+                inner.send_response(200); inner.send_header("Content-Type", "application/json")
+                inner.end_headers(); inner.wfile.write(data)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            client = OllamaClient()
+            client.host = "http://127.0.0.1:" + str(server.server_port)
+            result = CleaningAgent(self.service, client=client).ask(self.sid, "http", "Prepara el paro")
+        finally:
+            server.shutdown(); server.server_close(); thread.join()
         self.assertEqual(len(requests),2)
         self.assertEqual(result["tool_calls"][0]["name"],"simular_plan")
         self.assertIn("14:30",result["text"])
+
+    def test_truncated_answer_is_rejected(self):
+        client = SimpleNamespace(chat=lambda **kwargs: {"message": {"role": "assistant", "content": "partial"},
+                                                        "done": True, "done_reason": "length"})
+        with self.assertRaises(AgentUnavailable):
+            CleaningAgent(self.service, client=client).ask(self.sid, "short", "Prepara el paro")
+
+    def test_health_reports_missing_model_and_server(self):
+        with patch.object(OllamaClient, "request", return_value={"models": [{"name": "llama3:latest"}]}):
+            health = CleaningAgent(self.service, model="qwen3:4b").health()
+            self.assertFalse(health["ai"])
+            self.assertIn("ollama pull qwen3:4b", health["why"])
+        with patch.object(OllamaClient, "request", side_effect=AgentUnavailable("Ollama offline")):
+            self.assertFalse(CleaningAgent(self.service).health()["ai"])
+
+    def test_local_only_host_validation(self):
+        for host in ["https://example.org", "http://localhost:11434@example.org", "http://127.0.0.1:11434/path"]:
+            with self.subTest(host=host), patch.dict("os.environ", {"OLLAMA_HOST": host}):
+                with self.assertRaises(AgentUnavailable):
+                    OllamaClient()
+
+    def test_unknown_tool_cannot_mutate_state(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {"name": "operate_machine", "arguments": {}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "This action is not allowed."}, "done": True},
+        ])
+        client = SimpleNamespace(chat=lambda **kwargs: next(replies))
+        result = CleaningAgent(self.service, client=client).ask(self.sid, "unknown", "Start the line")
+        self.assertIn("error", result["tool_calls"][0]["summary"])
+        self.assertEqual(self.service.session(self.sid)["revision"], 0)
 
 
 if __name__ == "__main__":

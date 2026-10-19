@@ -135,7 +135,7 @@ window.SMED = (() => {
       draft.production_ready_at=snapshot.session.production_ready_at;draft.unavailable_resources=snapshot.session.unavailable_resources;
       if(snapshot.session.stopped_at)draft.stop_at=snapshot.session.stopped_at;
       renderLeft();health=await api('/api/health');
-      root.querySelector('#smed-ai-status').textContent=health.ai?'OpenAI · '+health.model+' · connection checked on first message':health.why;
+      root.querySelector('#smed-ai-status').textContent=health.ai?health.provider+' · '+health.model+' · local assistant':health.why;
       root.querySelector('#smed-send').disabled=!health.ai;
       addMessage('ai','I can help prepare the stop and compare cleaning plans. This demo uses simulated tasks and teams; the case data records 30-minute stops.');
     }catch(e){error(e.message);root.querySelector('#smed-left').textContent='Could not load the plan. Check the server.';}
