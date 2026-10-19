@@ -9,7 +9,7 @@ window.SMED = (() => {
   const statusName = {pending:'Pending',in_progress:'In progress',completed:'Complete',planned:'Planned'};
   const taskName = id => snapshot?.tasks.find(t=>t.task_id===id)?.description || id;
   const resourceName = id => snapshot?.resources.find(r=>r.resource_id===id)?.name || id;
-  const toolName = {consultar_estado:'Current status',consultar_procedimiento:'Cleaning procedure',simular_plan:'Plan simulation',calcular_impacto:'Potential value',proponer_avance:'Proposed update'};
+  const toolName = {consultar_estado:'Current status',consultar_procedimiento:'Cleaning procedure',simular_plan:'Plan simulation',comparar_planes:'Both preparation scenarios',calcular_impacto:'Potential value',proponer_avance:'Proposed update'};
   const actionName = {start_task:'Log start',complete_task:'Log finish',record_stop:'Log line stop',confirm_quality:'Confirm quality release',record_restart:'Log restart',set_clock:'Update time',settings:'Update availability',confirm_readiness:'Confirm readiness'};
   async function api(path, body) {
     const res = await fetch(path, body === undefined ? {cache:'no-store'} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -19,13 +19,36 @@ window.SMED = (() => {
   }
   function error(text) {root.querySelector('#smed-error').textContent=text || '';}
   function actor() {return root.querySelector('#smed-actor')?.value.trim() || 'Operator';}
+  function formatAnswer(container, text) {
+    // Escape first. Only these small formatting rules can create HTML.
+    const inline = value => esc(value).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
+    const lines=String(text).replace(/\\([*_`])/g,'$1').split('\n');
+    let list=null, paragraph=null;
+    for(const line of lines){
+      const trimmed=line.trim();
+      if(!trimmed){list=null;paragraph=null;continue;}
+      const item=trimmed.match(/^(?:[-*•]|\d+[.)])\s+(.+)$/);
+      if(item){
+        paragraph=null;
+        if(!list){list=document.createElement(/^\d/.test(trimmed)?'ol':'ul');container.appendChild(list);}
+        const li=document.createElement('li');li.innerHTML=inline(item[1]);list.appendChild(li);
+      }else{
+        list=null;
+        if(!paragraph){paragraph=document.createElement('p');container.appendChild(paragraph);}
+        else paragraph.appendChild(document.createElement('br'));
+        const span=document.createElement('span');span.innerHTML=inline(trimmed.replace(/^#{1,6}\s+/,''));paragraph.appendChild(span);
+      }
+    }
+  }
+  function scrollChat(){messages.scrollTop=messages.scrollHeight;}
   function addMessage(who, text, traces=[]) {
     const el=document.createElement('div');el.className='smed-message '+who;
-    const body=document.createElement('div');body.textContent=text;el.appendChild(body);
+    const body=document.createElement('div');body.className='smed-message-body';
+    if(who==='ai')formatAnswer(body,text);else body.textContent=text;el.appendChild(body);
     if(traces.length){const details=document.createElement('details');details.className='smed-trace';
       const summary=document.createElement('summary');summary.textContent='Tools used ('+traces.length+')';details.appendChild(summary);
       const pre=document.createElement('div');pre.textContent=traces.map(t=>toolName[t.name]||'Check').join('\n');details.appendChild(pre);el.appendChild(details);}
-    messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;
+    messages.appendChild(el);scrollChat();return el;
   }
   function readDraft(){
     const val=id=>root.querySelector('#'+id).value;
@@ -106,7 +129,9 @@ window.SMED = (() => {
   }
   async function ask(question){
     if(chatting||!health.ai)return;
-    chatting=true;root.querySelector('#smed-send').disabled=true;root.querySelector('#smed-question').value='';
+    chatting=true;root.querySelector('#smed-send').disabled=true;
+    const input=root.querySelector('#smed-question');input.value='';input.style.height='auto';
+    messages.setAttribute('aria-busy','true');
     addMessage('me',question);const pending=addMessage('ai','Checking the plan…');
     try{const reply=await api('/api/chat',{session_id:snapshot.session.id,conversation,question});pending.remove();
       const message=addMessage('ai',reply.text,reply.tool_calls);
@@ -115,17 +140,19 @@ window.SMED = (() => {
         button.onclick=async()=>{button.disabled=true;try{snapshot=await api('/api/smed/confirm',{session_id:snapshot.session.id,expected_revision:proposal.revision,proposal_id:proposal.id,confirmed:true,actor:actor()});
           button.textContent='Confirmed';plan=null;renderLeft();}catch(e){button.textContent='Not applied';error(e.message);await refresh();}};
         message.appendChild(button);}
+      scrollChat();
     }catch(e){pending.textContent=e.message;}
-    finally{chatting=false;root.querySelector('#smed-send').disabled=!health.ai;}
+    finally{chatting=false;messages.setAttribute('aria-busy','false');root.querySelector('#smed-send').disabled=!health.ai;input.focus({preventScroll:true});scrollChat();}
   }
   async function mount(element){
     if(ready)return;ready=true;root=element;
     root.innerHTML=`<div id="smed-error" class="smed-error" role="alert"></div><div class="smed-shell"><div id="smed-left">Loading plan…</div>
-      <aside class="smed-panel smed-chat"><span class="smed-badge">SMED ASSISTANT</span><h2 style="margin-top:10px">Cleaning assistant</h2>
-      <p id="smed-ai-status" class="smed-small">Checking connection…</p><div id="smed-messages" class="smed-messages" aria-live="polite"></div>
-      <div class="smed-suggestions">${['What should we prepare before the stop?','Compare preparing kits before vs during the stop.','What if only cleaning team 1 is available?','What prevents an earlier restart?'].map(q=>`<button class="smed-btn" data-question="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-      <form id="smed-composer" class="smed-compose"><textarea id="smed-question" maxlength="3000" placeholder="Ask about preparation, teams or delays…" aria-label="Ask the cleaning assistant"></textarea><button id="smed-send" class="smed-btn primary" disabled>Send</button></form>
-      <p class="smed-small">Review and confirm any proposed progress update.</p></aside></div>`;
+      <aside class="smed-panel smed-chat" aria-label="Cleaning assistant">
+      <header class="smed-chat-header"><div><span class="smed-eyebrow">MELT ASSISTANT</span><h2>Cleaning, made clearer.</h2></div>
+      <p id="smed-ai-status" class="smed-small">Checking connection…</p></header>
+      <div id="smed-messages" class="smed-messages" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions"></div>
+      <form id="smed-composer" class="smed-compose"><textarea id="smed-question" rows="1" maxlength="3000" placeholder="Ask about your cleaning plan…" aria-label="Ask the cleaning assistant"></textarea><button id="smed-send" class="smed-send" type="submit" aria-label="Send message" title="Send message" disabled>↑</button></form>
+      <p class="smed-chat-footnote">Enter to send · Shift+Enter for a new line</p></aside></div>`;
     messages=root.querySelector('#smed-messages');
     if(!location.protocol.startsWith('http')){root.querySelector('#smed-left').textContent='Start the demo with python -m melt_alert.server, then open http://127.0.0.1:8000.';return;}
     try{
@@ -137,12 +164,11 @@ window.SMED = (() => {
       renderLeft();health=await api('/api/health');
       root.querySelector('#smed-ai-status').textContent=health.ai?health.provider+' · '+health.model+' · local assistant':health.why;
       root.querySelector('#smed-send').disabled=!health.ai;
-      addMessage('ai','I can help prepare the stop and compare cleaning plans. This demo uses simulated tasks and teams; the case data records 30-minute stops.');
+      addMessage('ai','Your cleaning plan, in one conversation.\n\nI can check tasks, compare schedules and prepare updates for your confirmation. Task times and teams in this demo are simulated.');
     }catch(e){error(e.message);root.querySelector('#smed-left').textContent='Could not load the plan. Check the server.';}
     root.addEventListener('click',async e=>{
       const b=e.target.closest('button');if(!b)return;
       try{
-        if(b.dataset.question)return ask(b.dataset.question);
         if(b.dataset.start)return event('start_task',b.dataset.start);
         if(b.dataset.finish)return event('complete_task',b.dataset.finish);
         const action=b.dataset.action;if(!action)return;
@@ -156,6 +182,9 @@ window.SMED = (() => {
       }catch(err){error(err.message);}
     });
     root.querySelector('#smed-composer').addEventListener('submit',e=>{e.preventDefault();const q=root.querySelector('#smed-question').value.trim();if(q)ask(q);});
+    const input=root.querySelector('#smed-question');
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!chatting&&health.ai)root.querySelector('#smed-composer').requestSubmit();}});
+    input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,112)+'px';});
   }
   return {mount};
 })();

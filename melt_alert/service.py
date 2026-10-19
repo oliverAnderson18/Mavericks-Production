@@ -265,6 +265,15 @@ class SmedService:
                     "text": self.procedure, "task": self.by_id.get(tid)}
         if name == "simular_plan":
             return self.plan(session_id, args)
+        if name == "comparar_planes":
+            options = {k: v for k, v in args.items() if k != "prepare_before_stop"}
+            before = self.plan(session_id, {**options, "prepare_before_stop": True})
+            during = self.plan(session_id, {**options, "prepare_before_stop": False})
+            if before["session_revision"] != during["session_revision"]:
+                raise ConflictError("Session changed during comparison. Please compare again.")
+            return {"before": before, "during": during,
+                    "cleaning_minutes_saved": during["cleaning_minutes"] - before["cleaning_minutes"]
+                    if before["feasible"] and during["feasible"] else None}
         if name == "calcular_impacto":
             return self.impact(session_id, **args)
         if name == "proponer_avance":

@@ -62,6 +62,155 @@ class ServiceCase(unittest.TestCase):
         during = self.service.plan(self.sid, {"prepare_before_stop": False})
         self.assertLess(before["cleaning_minutes"], during["cleaning_minutes"])
 
+    def test_comparison_is_calculated_even_if_llm_is_offline(self):
+        client = SimpleNamespace(chat=lambda **kwargs: self.fail("Known comparison should use the planner directly"))
+        result = CleaningAgent(self.service, client=client).ask(self.sid, "compare", "Compare preparing kits before vs during the stop.")
+        self.assertEqual(result["tool_calls"][0]["name"], "comparar_planes")
+        self.assertIn("14:16", result["text"])
+        self.assertIn("14:22", result["text"])
+        self.assertIn("6 minutes earlier", result["text"])
+        self.assertIn("Neither option recovers production time", result["text"])
+        self.assertNotIn("after 14:30", result["text"])
+        self.assertEqual(self.service.session(self.sid)["revision"], 0)
+
+    def test_comparison_respects_work_already_started(self):
+        self.change("start_task", "KIT_ENR")
+        result = CleaningAgent(self.service).ask(self.sid, "recorded", "Compare external preparation before vs during the stop.")
+        comparison = self.service.tool(self.sid, "comparar_planes", {})
+        saved = comparison["cleaning_minutes_saved"]
+        self.assertIn(f"{saved} minutes earlier", result["text"])
+        self.assertEqual(self.service.session(self.sid)["tasks"]["KIT_ENR"]["status"], "in_progress")
+
+    def test_value_comparison_uses_planner_minutes_as_fractional_hours(self):
+        self.change("start_task", "KIT_ENR")
+        client = SimpleNamespace(chat=lambda **kwargs: self.fail("Economic comparison must not ask the LLM to calculate"))
+        reply = CleaningAgent(self.service, client=client).ask(
+            self.sid, "priced",
+            "Compare preparation before vs during the stop if production is available at 14:15. "
+            "Calculate savings for 65 days at 70% utilization and list required actions.")
+        self.assertEqual([call["name"] for call in reply["tool_calls"]],
+                         ["comparar_planes", "calcular_impacto", "calcular_impacto"])
+        self.assertIn("14:16", reply["text"])
+        self.assertIn("14:18", reply["text"])
+        self.assertIn("4,083.33 USD/day", reply["text"])
+        self.assertIn("3,500.00 USD/day", reply["text"])
+        self.assertIn("265,416.67 USD over 65 days", reply["text"])
+        self.assertIn("227,500.00 USD over 65 days", reply["text"])
+        self.assertIn("37,916.67 USD over 65 days", reply["text"])
+        self.assertIn("÷ 60", reply["text"])
+        self.assertNotIn("24,500", reply["text"])
+        self.assertEqual(reply["provider"], "Planner")
+
+    def test_value_comparison_without_earlier_availability_has_zero_recovery(self):
+        client = SimpleNamespace(chat=lambda **kwargs: self.fail("Known calculation should be deterministic"))
+        reply = CleaningAgent(self.service, client=client).ask(
+            self.sid, "zero", "Compare preparation before vs during the stop and show savings.")
+        self.assertIn("0.00 USD/day", reply["text"])
+        self.assertIn("0.00 USD over 65 days", reply["text"])
+        self.assertIn("both restart at 14:30", reply["text"])
+
+    def test_single_plan_value_uses_days_utilization_and_period_cost(self):
+        client = SimpleNamespace(chat=lambda **kwargs: self.fail("Value must come from the calculator"))
+        reply = CleaningAgent(self.service, client=client).ask(
+            self.sid, "one",
+            "How much money can cleaning preparation before the stop save if production is available at 14:15 "
+            "for 65 days at 70% utilization with additional cost of $100?")
+        self.assertEqual([call["name"] for call in reply["tool_calls"]],
+                         ["simular_plan", "calcular_impacto"])
+        self.assertIn("4,083.33 USD/day", reply["text"])
+        self.assertIn("265,316.67 USD over 65 days", reply["text"])
+        self.assertIn("100.00 USD additional costs for the period", reply["text"])
+        self.assertIn("not realized savings", reply["text"])
+
+    def test_llm_cannot_supply_money_without_a_verified_plan(self):
+        client = SimpleNamespace(chat=lambda **kwargs: {"message": {
+            "role": "assistant", "content": "The saving is $24,500 per day."}, "done": True})
+        reply = CleaningAgent(self.service, client=client).ask(
+            self.sid, "unsupported",
+            "Compare preparation before vs during the stop with only team 1 and show savings.")
+        self.assertNotIn("24,500", reply["text"])
+        self.assertIn("verified simulated plan", reply["text"])
+
+    def test_llm_plan_result_receives_computed_impact(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {
+                "name": "simular_plan", "arguments": {"prepare_before_stop": True,
+                    "production_ready_at": "14:15"}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "You saved $24,500 daily."}, "done": True},
+        ])
+        reply = CleaningAgent(self.service, client=SimpleNamespace(chat=lambda **kwargs: next(replies))).ask(
+            self.sid, "complex",
+            "How much money could cleaning preparation save with target 15 minutes and "
+            "production available at 14:15 for 65 days at 70% utilization?")
+        self.assertIn("4,083.33 USD/day", reply["text"])
+        self.assertNotIn("24,500", reply["text"])
+
+    def test_comparison_keeps_recorded_restart_constraint(self):
+        client = SimpleNamespace(chat=lambda **kwargs: self.fail("Recorded availability is not a new stop time"))
+        result = CleaningAgent(self.service, client=client).ask(self.sid, "same-time",
+            "Compare external preparation before the stop and preparation during the stop, keeping production availability at 14:30.")
+        self.assertIn("14:22", result["text"])
+        self.assertIn("6 minutes earlier", result["text"])
+        self.assertEqual(result["tool_calls"][0]["arguments"]["stop_at"], None)
+
+    def test_tool_error_is_not_evidence_of_an_invalid_recorded_scenario(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {
+                "name": "comparar_planes", "arguments": {"unavailable_resources": ["unknown_team"]}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "Your original stop at 14:30 is invalid. Change the recorded scenario."}, "done": True},
+        ])
+        result = CleaningAgent(self.service, client=SimpleNamespace(chat=lambda **kwargs: next(replies))).ask(self.sid, "wrong-args", "Compare plans without the unknown team")
+        self.assertIn("could not complete", result["text"])
+        self.assertNotIn("original stop at 14:30", result["text"])
+        self.assertEqual(self.service.session(self.sid)["stopped_at"], None)
+
+    def test_unrequested_llm_stop_and_target_changes_are_removed(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {
+                "name": "comparar_planes", "arguments": {"stop_at": "14:05", "target_stop_minutes": 30,
+                    "production_ready_at": "14:15", "unavailable_resources": [], "delays": []}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "The target is met."}, "done": True},
+        ])
+        result = CleaningAgent(self.service, client=SimpleNamespace(chat=lambda **kwargs: next(replies))).ask(
+            self.sid, "silent-change", "Compare preparing kits before vs during the stop if production availability is 14:15.")
+        self.assertIn("14:16", result["text"])
+        self.assertIn("Target: 15 min — not met", result["text"])
+        self.assertNotIn("14:21", result["text"])
+        self.assertIsNone(result["tool_calls"][0]["arguments"]["stop_at"])
+
+    def test_llm_cannot_override_calculated_times_or_value(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {
+                "name": "simular_plan", "arguments": {"prepare_before_stop": True}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "Cleaning at 14:16 is after 14:30. You saved 999 USD. Press Confirm."}, "done": True},
+        ])
+        result = CleaningAgent(self.service, client=SimpleNamespace(chat=lambda **kwargs: next(replies))).ask(self.sid, "wrong", "Simulate preparation")
+        self.assertIn("14:16", result["text"])
+        self.assertIn("14:30", result["text"])
+        self.assertNotIn("after 14:30", result["text"])
+        self.assertNotIn("999", result["text"])
+        self.assertNotIn("Confirm", result["text"])
+
+    def test_infeasible_comparison_does_not_invent_difference(self):
+        self.change("settings", value={"unavailable_resources": ["equipo_1", "equipo_2", "equipo_3"]})
+        result = CleaningAgent(self.service).ask(self.sid, "impossible", "Compare preparation before vs during the stop.")
+        self.assertIn("Not feasible", result["text"])
+        self.assertIn("cannot be calculated", result["text"])
+        self.assertNotIn("minutes earlier", result["text"])
+
+    def test_custom_comparison_constraints_reach_the_tool(self):
+        replies = iter([
+            {"message": {"role": "assistant", "tool_calls": [{"function": {
+                "name": "comparar_planes", "arguments": {"production_ready_at": "14:15"}}}]}, "done": True},
+            {"message": {"role": "assistant", "content": "Incorrect prose: zero recovery, no difference."}, "done": True},
+        ])
+        result = CleaningAgent(self.service, client=SimpleNamespace(chat=lambda **kwargs: next(replies))).ask(
+            self.sid, "early", "Compare preparation before vs during the stop if production is available at 14:15.")
+        self.assertIn("14:15", result["text"])
+        self.assertIn("**14 min**", result["text"])
+        self.assertIn("**8 min**", result["text"])
+        self.assertNotIn("Neither option recovers", result["text"])
+
     def test_shortage_and_delay_change_schedule(self):
         p = self.service.plan(self.sid)
         short = self.service.plan(self.sid, {"unavailable_resources": ["equipo_2", "equipo_3"]})
