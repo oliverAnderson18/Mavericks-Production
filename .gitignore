@@ -30,3 +30,8 @@ Thumbs.db
 
 # Datos locales
 data/
+
+# Asistente SMED: estado local y entorno opcional
+melt_alert/runtime/
+.venv-smed/
+.env

@@ -1,0 +1,23 @@
+{
+  "id": "xocoleta_smed_demo_v1",
+  "procedure_version": "DEMO-1",
+  "provenance": "SIMULATED_OPERATIONAL_SCENARIO",
+  "date": "2026-09-30",
+  "initial_clock": "13:40",
+  "preparation_start": "13:40",
+  "earliest_stop": "14:00",
+  "latest_stop": "14:10",
+  "default_stop": "14:00",
+  "production_ready_at": "14:30",
+  "historical_baseline_minutes": 30,
+  "target_minutes": 15,
+  "hourly_margin_usd_assumption": 25000,
+  "notes": [
+    "Los CSV originales solo documentan el paro global. Las tareas, duraciones, competencias y ventanas de este escenario son supuestos para la demo.",
+    "Las duraciones son indivisibles y no se pueden reducir desde el chat.",
+    "El procedimiento es ilustrativo: no es un procedimiento industrial validado ni prescribe productos quimicos o tiempos de higienizacion reales.",
+    "La disponibilidad productiva a las 14:30 refleja el horario original. Adelantarla en una simulacion constituye una hipotesis adicional.",
+    "El planificador utiliza una heuristica de listas con recursos y precedencias: genera un plan factible, no garantiza el optimo global.",
+    "La liberacion de calidad y el arranque se registran por confirmacion humana; el sistema no opera equipos."
+  ]
+}

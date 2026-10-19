@@ -1,0 +1,13 @@
+task_id,station,description,phase,duration_min,minimum_min,predecessors,skill,workers,mandatory,provenance
+KIT_ENR,ENR,Preparar kit de enrobadora,external_before,8,8,,preparacion,1,true,SIMULATED
+KIT_CAR,CAR,Preparar kit de caramelo,external_before,6,6,,preparacion,1,true,SIMULATED
+KIT_SHARED,LINE,Preparar materiales comunes,external_before,4,4,,preparacion,1,true,SIMULATED
+ISOLATE,LINE,Registrar aislamiento conforme al procedimiento del escenario,internal,2,2,,mantenimiento,1,true,SIMULATED
+ENR_CLEAN,ENR,Ejecutar limpieza de enrobadora del escenario,internal,8,8,KIT_ENR;ISOLATE,limpieza,1,true,SIMULATED
+ENR_ASSEMBLE,ENR,Montaje y comprobacion de enrobadora,internal,3,3,ENR_CLEAN,mantenimiento,1,true,SIMULATED
+CAR_CLEAN,CAR,Ejecutar limpieza de caramelo del escenario,internal,6,6,KIT_CAR;ISOLATE,limpieza,1,true,SIMULATED
+CAR_ASSEMBLE,CAR,Montaje y comprobacion de caramelo,internal,2,2,CAR_CLEAN,mantenimiento,1,true,SIMULATED
+BCM_CLEAN,BCM,Ejecutar limpieza de crema del escenario,internal,5,5,KIT_SHARED;ISOLATE,limpieza,1,true,SIMULATED
+GUI_CHECK,GUI,Comprobacion de guillotina en el escenario,internal,3,3,ISOLATE,mantenimiento,1,true,SIMULATED
+INSPECT,LINE,Registrar inspeccion final del escenario,internal,2,2,ENR_ASSEMBLE;CAR_ASSEMBLE;BCM_CLEAN;GUI_CHECK,calidad,1,true,SIMULATED
+CHECKLIST,LINE,Completar lista final del escenario,internal,1,1,INSPECT,calidad,1,true,SIMULATED

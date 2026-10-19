@@ -1,0 +1,22 @@
+.smed-shell{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(290px,1fr);gap:16px;align-items:start}
+.smed-shell h2{font-size:19px;margin:0 0 10px}.smed-shell h3{font-size:14px;margin:12px 0 6px}
+.smed-panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.smed-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.smed-kpi{padding:10px;border:1px solid var(--line);border-radius:10px}.smed-kpi strong{display:block;font:600 23px var(--mono);margin-top:4px}
+.smed-small{font-size:12px;color:var(--muted);line-height:1.5}.smed-badge{display:inline-block;padding:4px 8px;border-radius:6px;background:var(--surface);font-size:11px;color:var(--warn)}
+.smed-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.smed-form label{display:grid;gap:4px;font-size:12px}
+.smed-form input,.smed-form select,.smed-actor{width:100%;min-height:36px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+.smed-check{display:flex!important;align-items:center;gap:6px!important;font-size:12px}.smed-check input{width:auto;min-height:auto}
+.smed-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.smed-btn{padding:8px 10px;min-height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.smed-btn.primary{background:var(--accent);color:var(--surface);font-weight:600}.smed-btn:disabled{opacity:.45;cursor:default}
+.smed-table{width:100%;border-collapse:collapse;font-size:12px}.smed-table td,.smed-table th{text-align:left;padding:8px 5px;border-bottom:1px solid var(--line);vertical-align:top}.smed-table th{color:var(--muted);font-size:11px}
+.smed-table .smed-btn{font-size:11px;min-height:30px;padding:4px 6px}.smed-overflow{overflow:auto;max-height:360px}
+.smed-chat{position:sticky;top:0}.smed-messages{display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:470px;min-height:220px;padding:4px 0 12px}
+.smed-message{padding:11px;border-radius:10px;background:var(--surface);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}.smed-message.me{border-left:3px solid var(--accent)}
+.smed-message.ai{border:1px solid var(--line)}.smed-trace{font-size:11px;color:var(--muted);margin-top:8px;white-space:pre-wrap}
+.smed-compose{display:flex;gap:7px}.smed-compose textarea{min-width:0;flex:1;resize:vertical;min-height:65px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:9px}
+.smed-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.smed-suggestions button{font-size:11px;text-align:left}
+.smed-error{color:var(--crit);font-size:12px;white-space:pre-wrap}.smed-ok{color:var(--accent)}.smed-history{font-size:11px;line-height:1.8;color:var(--muted)}
+.smed-timeline{display:flex;min-width:260px;margin:3px 0;align-items:center;gap:6px}.smed-timeline b{width:95px;font-size:10px;flex-shrink:0}.smed-track{height:13px;flex:1;background:var(--surface);position:relative;border-radius:4px}.smed-track i{position:absolute;height:100%;border-radius:3px;background:var(--accent)}
+@media(max-width:1000px){.smed-shell{grid-template-columns:1fr}.smed-chat{position:static}.smed-messages{max-height:330px}}
+@media(max-width:550px){.smed-form{grid-template-columns:1fr}.smed-kpis{grid-template-columns:1fr 1fr}.smed-kpi strong{font-size:20px}}
