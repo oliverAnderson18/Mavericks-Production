@@ -1,15 +1,18 @@
 # Melt Alert · asistente SMED de limpieza
 
 Un unico agente de OpenAI prepara y coordina la limpieza programada. La pantalla
-incorpora la interfaz simplificada del equipo; su pestaña **Paros · SMED**
+incorpora la interfaz simplificada del equipo; su pestaña **Cleaning**
 conserva el planificador, seguimiento y chat con OpenAI.
 
-La pantalla En vivo prioriza una recomendacion y oculta carriles y parametros
-tras el boton de detalle tecnico. Prediccion muestra hasta cinco estaciones A
-y tres maquinas B. Fallos y soluciones utiliza las instrucciones simplificadas
-de la version Melt_Alert_compartir_ACTUALIZADO. Se conservan los mismos datos
-historicos y predicciones integrados; el servidor Anthropic de esa version no
-se utiliza. Para ver la actualizacion en una pestaña ya abierta, recarga con Ctrl+F5.
+Toda la interfaz esta en ingles, incluidos avisos, errores, tareas y respuestas
+del asistente. **Live** prioriza una recomendacion y oculta carriles y parametros
+tras **Lanes & settings**. **Forecast** muestra hasta cinco estaciones A y tres
+maquinas B; las metricas y escenarios economicos estan plegados en **Model
+evaluation & assumptions**. **Troubleshooting** muestra comprobaciones por maquina.
+Los datos historicos y predicciones integrados se conservan. La documentacion del
+repositorio permanece en español. Para aplicar cambios del agente, mensajes o
+catalogo, reinicia el servidor en la terminal donde configuraste la clave;
+despues recarga la pagina con Ctrl+F5.
 
 ## Ejecutar desde la raiz de Mavericks-Production
 
@@ -24,7 +27,7 @@ En PowerShell, configura las variables en la misma terminal que inicia el servid
     $env:OPENAI_MODEL="gpt-5.4-mini"
     python -m melt_alert.server
 
-Abre http://127.0.0.1:8000 y selecciona **Paros · SMED**. La clave permanece en el
+Abre http://127.0.0.1:8000 y selecciona **Cleaning**. La clave permanece en el
 servidor; nunca se almacena en HTML, SQLite ni Git. No pegues la clave en el chat.
 OPENAI_MODEL es opcional. Se usa Responses API con herramientas y razonamiento low.
 El indicador de configuracion no verifica el acceso a la API: eso se comprueba
@@ -69,7 +72,7 @@ para rechazar confirmaciones obsoletas o repetidas.
 agent.py ofrece cinco herramientas: consultar_estado, consultar_procedimiento,
 simular_plan, calcular_impacto y proponer_avance. Las llamadas del agente aparecen
 en la respuesta. proponer_avance solo crea una propuesta; el usuario debe pulsar
-Confirmar. Los botones del panel tambien registran la confirmacion humana.
+**Confirm**. Los botones del panel tambien registran la confirmacion humana.
 No se ofrece una herramienta que opere maquinas o cambie duraciones minimas.
 
 server.py conserva las credenciales y obtiene el contexto del servidor, no de

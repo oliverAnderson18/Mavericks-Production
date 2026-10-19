@@ -1,6 +1,6 @@
 resource_id,name,skills,available_from,available_until,provenance
-equipo_1,Equipo de limpieza 1,preparacion;limpieza,13:30,16:30,SIMULATED
-equipo_2,Equipo de limpieza 2,preparacion;limpieza,13:30,16:30,SIMULATED
-equipo_3,Equipo de limpieza 3,preparacion;limpieza,13:30,16:30,SIMULATED
-mantenimiento,Equipo de mantenimiento,mantenimiento,13:30,16:30,SIMULATED
-calidad,Responsable de calidad,calidad,13:30,16:30,SIMULATED
+equipo_1,Cleaning team 1,preparacion;limpieza,13:30,16:30,SIMULATED
+equipo_2,Cleaning team 2,preparacion;limpieza,13:30,16:30,SIMULATED
+equipo_3,Cleaning team 3,preparacion;limpieza,13:30,16:30,SIMULATED
+mantenimiento,Maintenance team,mantenimiento,13:30,16:30,SIMULATED
+calidad,Quality lead,calidad,13:30,16:30,SIMULATED

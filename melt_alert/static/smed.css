@@ -17,6 +17,6 @@
 .smed-compose{display:flex;gap:7px}.smed-compose textarea{min-width:0;flex:1;resize:vertical;min-height:65px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:9px}
 .smed-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.smed-suggestions button{font-size:11px;text-align:left}
 .smed-error{color:var(--crit);font-size:12px;white-space:pre-wrap}.smed-ok{color:var(--accent)}.smed-history{font-size:11px;line-height:1.8;color:var(--muted)}
-.smed-timeline{display:flex;min-width:260px;margin:3px 0;align-items:center;gap:6px}.smed-timeline b{width:95px;font-size:10px;flex-shrink:0}.smed-track{height:13px;flex:1;background:var(--surface);position:relative;border-radius:4px}.smed-track i{position:absolute;height:100%;border-radius:3px;background:var(--accent)}
+.smed-timeline{display:flex;min-width:260px;margin:3px 0;align-items:center;gap:6px}.smed-timeline b{width:145px;font-size:11px;flex-shrink:0}.smed-track{height:13px;flex:1;background:var(--surface);position:relative;border-radius:4px}.smed-track i{position:absolute;height:100%;border-radius:3px;background:var(--accent)}
 @media(max-width:1000px){.smed-shell{grid-template-columns:1fr}.smed-chat{position:static}.smed-messages{max-height:330px}}
 @media(max-width:550px){.smed-form{grid-template-columns:1fr}.smed-kpis{grid-template-columns:1fr 1fr}.smed-kpi strong{font-size:20px}}

@@ -22,7 +22,7 @@ class ConflictError(ValidationError):
 def historical_baseline(data_dir):
     path = Path(data_dir) / "fct_oee_minute.csv"
     if not path.is_file():
-        return {"available": False, "source": str(path), "note": "Historico no encontrado; los 30 min del escenario son una referencia declarada."}
+        return {"available": False, "source": str(path), "note": "Historical data unavailable; the 30-minute baseline is a stated scenario assumption."}
     runs, current = [], []
     previous = None
     with path.open(encoding="utf-8-sig", newline="") as stream:
@@ -44,7 +44,7 @@ def historical_baseline(data_dir):
             "durations_minutes": sorted({len(r) for r in runs}),
             "first_date": str(runs[0][0].date()) if runs else None,
             "last_date": str(runs[-1][0].date()) if runs else None,
-            "note": "Solo paro global: no contiene tareas, recursos ni eficacia de un cambio SMED."}
+            "note": "Line-level stops only; no task timings, staffing or SMED intervention results."}
 
 
 class SmedService:
@@ -78,7 +78,7 @@ class SmedService:
 
     def session(self, session_id=None):
         if session_id is not None and (not isinstance(session_id, str) or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", session_id)):
-            raise ValidationError("Sesion no valida.")
+            raise ValidationError("Invalid session.")
         session_id = session_id or uuid.uuid4().hex
         with self.lock, self.connect() as db:
             row = db.execute("SELECT body FROM sessions WHERE id=?", (session_id,)).fetchone()
@@ -103,86 +103,86 @@ class SmedService:
         missing = [t["task_id"] for t in self.tasks if t["mandatory"] and state["tasks"].get(t["task_id"], {}).get("status") != "completed"]
         reasons = []
         if not state["stopped_at"]:
-            reasons.append("No se ha registrado el paro.")
+            reasons.append("Log the line stop.")
         if missing:
-            reasons.append("Tareas obligatorias pendientes: " + ", ".join(missing))
+            reasons.append("Required tasks pending: " + ", ".join(missing))
         if not state["quality_released"]:
-            reasons.append("Falta confirmacion humana de liberacion de calidad.")
+            reasons.append("Confirm quality release.")
         if not state["staff_ready"] or not state["material_ready"]:
-            reasons.append("Falta disponibilidad confirmada de personal o material.")
+            reasons.append("Confirm staff and materials are ready.")
         if minute(state["clock"]) < minute(state["production_ready_at"]):
-            reasons.append("El horario productivo indicado comienza a las " + state["production_ready_at"])
+            reasons.append("Production availability starts at " + state["production_ready_at"])
         return {"recorded_conditions_met": not reasons, "reasons": reasons, "physical_actuation": False,
-                "note": "Comprobacion de registros del escenario; no orden de arranque ni certificado de higiene."}
+                "note": "Scenario records check only; this does not operate equipment or certify hygiene."}
 
-    def _apply(self, state, action, task_id=None, actor="Operario demo", value=None, note=""):
+    def _apply(self, state, action, task_id=None, actor="Operator", value=None, note=""):
         actor = actor.strip() if isinstance(actor, str) else ""
         if not actor or len(actor) > 100 or not isinstance(note, str) or len(note) > 600:
-            raise ValidationError("Responsable o nota no validos.")
+            raise ValidationError("Invalid operator name or note.")
         now = minute(state["clock"])
         if state["restarted_at"] and action != "set_clock":
-            raise ValidationError("La sesion ya registra un arranque. Crea otra sesion para repetir la demo.")
+            raise ValidationError("Restart already logged. Create a new session to repeat the scenario.")
         if action == "set_clock":
             if minute(value) < now:
-                raise ValidationError("El reloj no puede retroceder. Crea una sesion nueva para repetir.")
+                raise ValidationError("The clock cannot move backwards. Create a new session to start again.")
             state["clock"] = value
         elif action == "settings":
             if not isinstance(value, dict) or set(value) - {"production_ready_at", "unavailable_resources"}:
-                raise ValidationError("Configuracion no valida.")
+                raise ValidationError("Invalid settings.")
             if "production_ready_at" in value:
                 minute(value["production_ready_at"])
                 state["production_ready_at"] = value["production_ready_at"]
             if "unavailable_resources" in value:
                 ids = value["unavailable_resources"]
                 if not isinstance(ids, list) or any(not isinstance(x, str) for x in ids) or set(ids) - self.resource_by_id.keys():
-                    raise ValidationError("Recurso desconocido.")
+                    raise ValidationError("Unknown team.")
                 active = {r for t in state["tasks"].values() if t["status"] == "in_progress" for r in t["resources"]}
                 if active & set(ids):
-                    raise ValidationError("Un recurso ejecuta una tarea; registra su finalizacion antes de retirarlo.")
+                    raise ValidationError("A team is busy. Log its task completion before removing it.")
                 state["unavailable_resources"] = sorted(set(ids))
         elif action == "record_stop":
             if state["stopped_at"]:
-                raise ValidationError("El paro ya esta registrado.")
+                raise ValidationError("Line stop already logged.")
             if not minute(self.scenario["earliest_stop"]) <= now <= minute(self.scenario["latest_stop"]):
-                raise ValidationError("El escenario solo permite registrar el paro entre 14:00 y 14:10.")
+                raise ValidationError("This scenario allows stops between 14:00 and 14:10 only.")
             state["stopped_at"] = state["clock"]
         elif action in {"start_task", "complete_task"}:
             if task_id not in self.by_id:
-                raise ValidationError("Tarea desconocida.")
+                raise ValidationError("Unknown task.")
             task = self.by_id[task_id]
             actual = state["tasks"].get(task_id, {})
             if action == "start_task":
                 if actual.get("status") in {"in_progress", "completed"}:
-                    raise ValidationError("La tarea ya se inicio.")
+                    raise ValidationError("Task already started.")
                 if any(state["tasks"].get(p, {}).get("status") != "completed" for p in task["predecessors"]):
-                    raise ValidationError("Faltan tareas predecesoras por completar.")
+                    raise ValidationError("Complete the prerequisite tasks first.")
                 if task["phase"] == "internal" and not state["stopped_at"]:
-                    raise ValidationError("Esta tarea requiere el paro registrado.")
+                    raise ValidationError("Log the line stop before starting this task.")
                 if now < minute(self.scenario["preparation_start"]):
-                    raise ValidationError("Todavia no empieza la preparacion del escenario.")
+                    raise ValidationError("Scenario preparation has not started yet.")
                 busy = {r for t in state["tasks"].values() if t["status"] == "in_progress" for r in t["resources"]}
                 choices = [r["resource_id"] for r in self.resources if task["skill"] in r["skills"]
                            and r["resource_id"] not in busy and r["resource_id"] not in state["unavailable_resources"]
                            and minute(r["available_from"]) <= now and now + task["minimum_min"] <= minute(r["available_until"])]
                 if len(choices) < task["workers"]:
-                    raise ValidationError("No hay suficientes recursos compatibles y libres.")
+                    raise ValidationError("Not enough qualified teams available.")
                 state["tasks"][task_id] = {"status": "in_progress", "started_at": state["clock"],
                     "completed_at": None, "resources": choices[:task["workers"]], "actor": actor}
             else:
                 if actual.get("status") != "in_progress":
-                    raise ValidationError("La tarea debe estar en curso.")
+                    raise ValidationError("Start the task before logging its completion.")
                 if now - minute(actual["started_at"]) < task["minimum_min"]:
-                    raise ValidationError("No ha transcurrido la duracion minima del escenario.")
+                    raise ValidationError("The minimum task duration has not elapsed.")
                 actual.update(status="completed", completed_at=state["clock"], completed_by=actor)
         elif action == "confirm_quality":
             if any(state["tasks"].get(t["task_id"], {}).get("status") != "completed" for t in self.tasks if t["mandatory"]):
-                raise ValidationError("No se libera calidad con tareas obligatorias pendientes.")
+                raise ValidationError("Complete all required tasks before confirming quality release.")
             if state["quality_released"]:
-                raise ValidationError("La liberacion ya esta registrada.")
+                raise ValidationError("Quality release already confirmed.")
             state["quality_released"] = True
         elif action == "confirm_readiness":
             if not isinstance(value, dict) or set(value) != {"staff_ready", "material_ready"} or any(type(v) is not bool for v in value.values()):
-                raise ValidationError("Confirma personal y material con valores booleanos.")
+                raise ValidationError("Staff and material readiness must be true or false.")
             state.update(value)
         elif action == "record_restart":
             check = self.readiness(state)
@@ -190,23 +190,23 @@ class SmedService:
                 raise ValidationError("; ".join(check["reasons"]))
             state["restarted_at"] = state["clock"]
         else:
-            raise ValidationError("Accion desconocida.")
+            raise ValidationError("Unknown action.")
         return {"action": action, "task_id": task_id, "actor": actor, "clock": state["clock"], "note": note,
                 "value": value, "provenance": "SIMULATED_OPERATOR_RECORD", "physical_actuation": False}
 
-    def mutate(self, session_id, expected_revision, action, task_id=None, actor="Operario demo", value=None, note="", proposal_id=None):
+    def mutate(self, session_id, expected_revision, action, task_id=None, actor="Operator", value=None, note="", proposal_id=None):
         with self.lock, self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT body FROM sessions WHERE id=?", (session_id,)).fetchone()
             if row is None:
-                raise ValidationError("Sesion desconocida.")
+                raise ValidationError("Unknown session.")
             state = json.loads(row[0])
             if type(expected_revision) is not int or state["revision"] != expected_revision:
-                raise ConflictError("El estado ha cambiado; actualiza antes de confirmar.")
+                raise ConflictError("Status changed. Refresh before confirming.")
             if proposal_id:
                 proposal = db.execute("SELECT * FROM proposals WHERE id=? AND session_id=?", (proposal_id, session_id)).fetchone()
                 if not proposal or proposal["status"] != "pending" or proposal["revision"] != state["revision"]:
-                    raise ConflictError("Propuesta inexistente, ya aplicada o desactualizada.")
+                    raise ConflictError("Proposal missing, already applied or out of date.")
                 supplied = json.loads(proposal["body"])
                 action, task_id, note = supplied["action"], supplied.get("task_id"), supplied.get("note", "")
             event = self._apply(state, action, task_id, actor, value, note)
@@ -220,9 +220,9 @@ class SmedService:
 
     def propose(self, session_id, action, task_id=None, note=""):
         if action not in {"start_task", "complete_task", "record_stop", "confirm_quality", "record_restart"}:
-            raise ValidationError("El agente no puede proponer esa accion.")
+            raise ValidationError("The assistant cannot propose this action.")
         state = self.session(session_id)
-        self._apply(copy.deepcopy(state), action, task_id, "Propuesta del agente", note=note)
+        self._apply(copy.deepcopy(state), action, task_id, "Assistant proposal", note=note)
         pid = uuid.uuid4().hex
         proposal = {"id": pid, "action": action, "task_id": task_id, "note": note,
                     "revision": state["revision"], "requires_human_confirmation": True}
@@ -247,7 +247,7 @@ class SmedService:
         with self.connect() as db:
             row = db.execute("SELECT body FROM plans WHERE id=? AND session_id=?", (plan_id, session_id)).fetchone()
         if not row:
-            raise ValidationError("Plan desconocido para esta sesion.")
+            raise ValidationError("Plan not found for this session.")
         plan = json.loads(row[0])
         result = economic_impact(plan, self.scenario, days, utilization, additional_cost_usd)
         result.update(plan_id=plan_id, session_revision=plan["session_revision"],
@@ -260,7 +260,7 @@ class SmedService:
         if name == "consultar_procedimiento":
             tid = args.get("task_id")
             if tid is not None and tid not in self.by_id:
-                raise ValidationError("Tarea desconocida.")
+                raise ValidationError("Unknown task.")
             return {"version": self.scenario["procedure_version"], "provenance": "SIMULATED_PROCEDURE",
                     "text": self.procedure, "task": self.by_id.get(tid)}
         if name == "simular_plan":
@@ -269,4 +269,4 @@ class SmedService:
             return self.impact(session_id, **args)
         if name == "proponer_avance":
             return self.propose(session_id, **args)
-        raise ValidationError("Herramienta no permitida.")
+        raise ValidationError("Tool not allowed.")

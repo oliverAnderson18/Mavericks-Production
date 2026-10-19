@@ -57,33 +57,33 @@ def make_handler(service, agent, static_dir=ROOT / "static"):
             try:
                 # Solo JSON de la app local. Ninguna clave se recibe del navegador.
                 if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
-                    return self.send_json(415, {"error": "Se requiere application/json."})
+                    return self.send_json(415, {"error": "Content type must be application/json."})
                 origin = self.headers.get("Origin")
                 if origin and urlparse(origin).netloc != self.headers.get("Host"):
-                    return self.send_json(403, {"error": "Origen no permitido."})
+                    return self.send_json(403, {"error": "Origin not allowed."})
                 size = int(self.headers.get("Content-Length", 0))
                 if size < 0 or size > 32768:
-                    return self.send_json(413, {"error": "Peticion demasiado grande."})
+                    return self.send_json(413, {"error": "Request too large."})
                 body = json.loads(self.rfile.read(size) or b"{}")
                 if not isinstance(body, dict):
-                    raise ValidationError("La peticion debe ser un objeto JSON.")
+                    raise ValidationError("Request must be a JSON object.")
                 path = urlparse(self.path).path
                 if path == "/api/smed/session":
                     return self.send_json(201, service.snapshot(service.session()["id"]))
                 sid = body.get("session_id")
                 if not isinstance(sid, str) or not sid:
-                    raise ValidationError("Falta session_id.")
+                    raise ValidationError("Session ID is required.")
                 service.session(sid)
                 if path == "/api/smed/plan":
                     return self.send_json(200, service.plan(sid, body.get("options")))
                 if path == "/api/smed/event":
                     return self.send_json(200, service.mutate(sid, body.get("expected_revision"), body.get("action"),
-                        task_id=body.get("task_id"), actor=body.get("actor", "Operario demo"), value=body.get("value"), note=body.get("note", "")))
+                        task_id=body.get("task_id"), actor=body.get("actor", "Operator"), value=body.get("value"), note=body.get("note", "")))
                 if path == "/api/smed/confirm":
                     if body.get("confirmed") is not True or not isinstance(body.get("proposal_id"), str):
-                        raise ValidationError("Hace falta una confirmacion explicita de la propuesta.")
+                        raise ValidationError("Confirm the proposal explicitly before applying it.")
                     return self.send_json(200, service.mutate(sid, body.get("expected_revision"), "",
-                        actor=body.get("actor", "Operario demo"), proposal_id=body["proposal_id"]))
+                        actor=body.get("actor", "Operator"), proposal_id=body["proposal_id"]))
                 if path == "/api/chat":
                     return self.send_json(200, agent.ask(sid, body.get("conversation", "default"), body.get("question")))
                 return self.send_error(404)
@@ -96,11 +96,11 @@ def make_handler(service, agent, static_dir=ROOT / "static"):
             except Exception as exc:
                 # No devolver respuestas crudas del proveedor, cabeceras o credenciales.
                 status = getattr(exc, "status_code", None)
-                message = {401: "OpenAI rechaza la clave. Revisa OPENAI_API_KEY en el servidor.",
-                           403: "La cuenta no tiene acceso a este modelo de OpenAI.",
-                           404: "Modelo no disponible: revisa OPENAI_MODEL.",
-                           429: "OpenAI indica limite de uso o saldo. Revisa tu cuenta y reintenta."}.get(status,
-                           "No se pudo completar la operacion. Revisa la conexion, el SDK y el registro del servidor.")
+                message = {401: "OpenAI rejected the API key. Check OPENAI_API_KEY on the server.",
+                           403: "This account cannot access the selected OpenAI model.",
+                           404: "Model unavailable. Check OPENAI_MODEL on the server.",
+                           429: "OpenAI usage or credit limit reached. Check the account and try again."}.get(status,
+                           "Request failed. Check the server connection, SDK and logs.")
                 self.log_error("Fallo %s (status=%s)", type(exc).__name__, status)
                 self.send_json(502 if status else 500, {"error": message})
 

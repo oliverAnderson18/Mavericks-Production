@@ -13,11 +13,11 @@
   "target_minutes": 15,
   "hourly_margin_usd_assumption": 25000,
   "notes": [
-    "Los CSV originales solo documentan el paro global. Las tareas, duraciones, competencias y ventanas de este escenario son supuestos para la demo.",
-    "Las duraciones son indivisibles y no se pueden reducir desde el chat.",
-    "El procedimiento es ilustrativo: no es un procedimiento industrial validado ni prescribe productos quimicos o tiempos de higienizacion reales.",
-    "La disponibilidad productiva a las 14:30 refleja el horario original. Adelantarla en una simulacion constituye una hipotesis adicional.",
-    "El planificador utiliza una heuristica de listas con recursos y precedencias: genera un plan factible, no garantiza el optimo global.",
-    "La liberacion de calidad y el arranque se registran por confirmacion humana; el sistema no opera equipos."
+    "Case data records line-level stops only. Tasks, durations, skills and availability are demo assumptions.",
+    "Tasks are indivisible. The assistant cannot shorten their minimum durations.",
+    "Illustrative procedure only; replace it with the approved plant procedure before operational use. It specifies no chemicals or validated hygiene times.",
+    "Production availability at 14:30 follows the original schedule. Earlier availability is an additional assumption.",
+    "Resource-constrained list scheduling finds a feasible plan, without guaranteeing the global optimum.",
+    "Quality release and restart require human confirmation. The system does not operate equipment."
   ]
 }

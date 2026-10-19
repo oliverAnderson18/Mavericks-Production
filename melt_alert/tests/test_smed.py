@@ -52,7 +52,7 @@ class ServiceCase(unittest.TestCase):
     def test_early_staffing_is_an_explicit_economic_assumption(self):
         p = self.service.plan(self.sid, {"production_ready_at": "14:15"})
         self.assertGreater(p["recovered_production_minutes"], 0)
-        self.assertTrue(any("modificada" in s for s in p["assumptions"]))
+        self.assertTrue(any("availability changed" in s for s in p["assumptions"]))
         impact = self.service.impact(self.sid, p["id"], days=10, utilization=.5, additional_cost_usd=100)
         expected = p["recovered_production_minutes"] / 60 * 25000 * 10 * .5 - 100
         self.assertAlmostEqual(impact["net_conditional_potential_usd"], round(expected, 2))
