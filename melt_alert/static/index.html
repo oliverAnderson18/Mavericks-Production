@@ -795,7 +795,13 @@ function findings() {
 function renderFail() {
   const el = document.getElementById("view-fail");
   const risk = D.risk, sel = risk.find(x => x.machine === S.failSel) || risk[0], m = sel.machine;
-  const items = (m === "ENR" ? [{ code: "ENR-EDGE" }] : []).concat(sel.problems.slice(0, 3));
+  const activeCodes = (R[S.i].ev || []).filter(code => D.problems[code] && D.problems[code].machine === m);
+  const items = activeCodes.length
+    ? activeCodes.map(code => ({ code }))
+    : (m === "ENR" ? [{ code: "ENR-EDGE" }] : []).concat(sel.problems.slice(0, 3));
+  const issueContext = activeCodes.length
+    ? "Active condition in this replay minute."
+    : "Common historical issues for this machine; confirm the live values before acting.";
   const [lv, word] = chance(sel.p_shift);
   el.innerHTML = `
     <div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.7fr)">
@@ -808,6 +814,7 @@ function renderFail() {
       <div class="panel">
         <div class="ph"><h2>${MN[m] || sel.name}</h2><span class="pill p-${lv}">Stop likelihood: ${word}</span></div>
         <p class="prose" style="margin-bottom:4px">${DOES[m] || ""}. ${fmt(sel.events)} recorded stops in 13 weeks.</p>
+        <p class="note" style="margin:0 0 8px">${issueContext}</p>
         ${items.map(p => { const e = EASY[p.code] || ["Recorded fault", "", ["Contact the shift lead."]];
           return `<div class="prob"><div class="hd"><span>${e[0]}</span>${p.n ? `<span class="meta">${fmt(p.n)} events</span>` : `<span class="pill p-warn">App alert</span>`}</div>
           ${e[1] ? `<div class="sym"><b>Signs:</b> ${e[1]}</div>` : ""}
@@ -884,3 +891,6 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => ti
 
 </body>
 </html>
+
+
+
