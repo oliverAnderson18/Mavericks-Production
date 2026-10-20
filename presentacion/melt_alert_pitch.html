@@ -1,0 +1,672 @@
+<title>Pitch Melt Alert</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Escenario 16:9 de 1920×1080 escalado a la ventana; el presentador avanza con clic, flechas, espacio o mando (AvPág/RePág). */
+:root {
+  color-scheme: light;
+  --page: #e9ebe8;        /* mesa de trabajo, igual que la app */
+  --bg: #f8f8f6;          /* pantalla de la app */
+  --bg2: #efece8;
+  --panel: #ffffff;
+  --line: #ddd8d3;
+  --ink: #241a15;         /* cacao casi negro */
+  --muted: #6c625c;
+  --loss: #c2362b;        /* lo que se pierde */
+  --loss-soft: #fbe7e4;
+  --gain: #2c7a4b;        /* lo que se recupera */
+  --gain-soft: #e3f1e8;
+  --cocoa: #6b3a22;       /* chocolate templado, acento de la app */
+  --cocoa-soft: #f1e6de;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+.deck { position: relative; width: 100%; height: 100%; }
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); overflow: hidden; border-radius: 6px; box-shadow: 0 10px 40px rgba(36,26,21,.10); }
+.num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* escenas y apariciones */
+.scene { position: absolute; inset: 0; padding: 110px 130px 120px; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s; display: flex; flex-direction: column; gap: 40px; }
+.scene.active { opacity: 1; visibility: visible; transition: opacity .6s ease, visibility 0s; }
+[data-s] { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+[data-s].in { opacity: 1; transform: none; }
+[data-s].fade { transform: none; }
+.eyebrow { font-family: var(--mono); font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1, h2, h3 { margin: 0; font-weight: 700; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 84px; line-height: 1; letter-spacing: .005em; max-width: 1560px; }
+h2 em { font-style: normal; color: var(--loss); }
+h2 strong { color: var(--cocoa); font-weight: 700; }
+h2 strong.g { color: var(--gain); }
+.lead { font-size: 32px; line-height: 1.4; color: var(--muted); max-width: 1300px; margin: 0; }
+.foot { position: absolute; left: 130px; right: 130px; bottom: 44px; font-size: 20px; color: var(--muted); font-family: var(--mono); }
+.big { font-family: var(--display); font-weight: 700; line-height: .9; }
+.big.num, .big .num { font-family: var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.loss { color: var(--loss); } .gain { color: var(--gain); } .muted { color: var(--muted); }
+
+/* barra de pérdidas en directo */
+.ticker { position: absolute; top: 34px; right: 40px; z-index: 5; display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 20px; color: var(--muted);
+  background: rgba(255,255,255,.94); border: 1px solid var(--line); border-radius: 99px; padding: 8px 18px; opacity: 0; transition: opacity .6s; }
+.ticker.on { opacity: 1; }
+.ticker b { color: var(--loss); font-weight: 500; font-size: 24px; }
+.ticker i { width: 10px; height: 10px; border-radius: 50%; background: var(--loss); animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* controles */
+.ctrl { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 8px; opacity: .25; transition: opacity .3s; }
+.ctrl:hover, .ctrl:focus-within { opacity: 1; }
+.ctrl button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); font-size: 20px; cursor: pointer; display: grid; place-items: center; }
+.ctrl span { font-family: var(--mono); font-size: 16px; color: var(--muted); min-width: 70px; text-align: center; }
+.dots { position: absolute; left: 130px; top: 52px; display: flex; gap: 8px; z-index: 5; }
+.dots i { width: 26px; height: 4px; border-radius: 2px; background: var(--line); transition: background .4s; }
+.dots i.on { background: #c9b3a5; } .dots i.cur { background: var(--cocoa); }
+.notes { position: absolute; right: 30px; bottom: 80px; width: 560px; z-index: 7; background: #ffffff; border: 1px solid var(--cocoa); box-shadow: 0 12px 40px rgba(36,26,21,.15); border-radius: 14px; padding: 20px 24px; font-size: 22px; line-height: 1.45; }
+.notes h4 { margin: 0 0 8px; font-family: var(--mono); font-size: 16px; color: var(--cocoa); letter-spacing: .1em; text-transform: uppercase; }
+button:focus-visible { outline: 3px solid var(--cocoa); outline-offset: 2px; }
+
+/* 0 · portada */
+.cover { justify-content: center; gap: 30px; }
+.cover h1 { font-family: var(--display); font-size: 260px; line-height: .85; letter-spacing: -.01em; }
+.cover h1 span { color: var(--cocoa); }
+.cover .lead { font-size: 40px; color: var(--ink); max-width: 1100px; }
+.barsvg { position: absolute; right: 120px; top: 230px; width: 640px; }
+.drip { animation: drip 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: top; }
+.drip:nth-of-type(2) { animation-delay: 1.1s; } .drip:nth-of-type(3) { animation-delay: 2.2s; }
+@keyframes drip { 0%, 100% { transform: scaleY(.35); } 60% { transform: scaleY(1); } }
+.since { font-family: var(--mono); font-size: 30px; color: var(--muted); }
+.since b { font-size: 64px; color: var(--loss); font-weight: 500; display: block; margin-top: 6px; }
+
+/* 1 · pérdidas */
+.losses { display: grid; gap: 22px; }
+.lrow { display: grid; grid-template-columns: 520px 1fr 330px; align-items: center; gap: 30px; }
+.lrow .lbl { font-size: 32px; line-height: 1.2; } .lrow .lbl small { display: block; font-size: 22px; color: var(--muted); }
+.ltrack { height: 58px; background: var(--bg2); border-radius: 10px; overflow: hidden; }
+.lfill { height: 100%; width: 0; background: linear-gradient(90deg, #e07a6e, var(--loss)); border-radius: 10px; transition: width 1.6s cubic-bezier(.2,.8,.2,1); }
+.in .lfill { width: var(--w); }
+.lrow .v { font-family: var(--display); font-size: 62px; font-weight: 700; text-align: right; color: var(--loss); }
+.total { display: flex; align-items: center; gap: 50px; border-top: 2px solid var(--line); padding-top: 22px; }
+.total .big { font-size: 140px; color: var(--loss); }
+.total .year { font-size: 34px; color: var(--muted); } .total .year b { font-family: var(--display); font-size: 80px; color: var(--loss); display: block; line-height: 1; margin-top: 4px; }
+
+/* 2 · carriles */
+.split { display: grid; grid-template-columns: 780px 1fr; gap: 60px; align-items: start; flex: 1; }
+.facts { display: grid; gap: 22px; }
+.fact { display: grid; grid-template-columns: 270px 1fr; gap: 24px; align-items: baseline; }
+.fact .big { font-size: 104px; color: var(--loss); }
+.fact p { margin: 0; font-size: 28px; line-height: 1.35; } .fact p small { display: block; color: var(--muted); font-size: 22px; margin-top: 4px; }
+.lanes { position: relative; height: 600px; }
+.lanes svg { width: 100%; height: 100%; overflow: visible; }
+.lanebar { transition: fill .8s, opacity .8s, height 1.2s cubic-bezier(.2,.8,.2,1), y 1.2s cubic-bezier(.2,.8,.2,1); }
+svg text { font-family: var(--mono); fill: var(--muted); }
+
+/* 3 · cortina */
+.chartbox { display: grid; grid-template-columns: 1fr 470px; gap: 60px; flex: 1; align-items: start; }
+.drawline { stroke-dasharray: 3000; stroke-dashoffset: 3000; transition: stroke-dashoffset 2.6s ease; }
+.in .drawline, .drawline.in { stroke-dashoffset: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 28px 30px; }
+.card h3 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.card p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--muted); }
+.card .big { font-size: 100px; }
+
+/* 4 · paro de las 14:00 */
+.day { position: relative; height: 150px; margin-top: 10px; }
+.dayband { position: absolute; top: 40px; height: 70px; border-radius: 8px; background: #d9cdc4; }
+.gap { position: absolute; top: 20px; height: 110px; background: var(--loss); border-radius: 8px; animation: pulse 1.6s infinite; box-shadow: 0 0 30px rgba(194,54,43,.35); }
+.ticks { position: absolute; top: 120px; left: 0; right: 0; height: 30px; font-family: var(--mono); font-size: 20px; color: var(--muted); }
+.ticks span { position: absolute; transform: translateX(-50%); }
+.cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.cards3 .big { font-size: 120px; color: var(--loss); }
+.oee { display: flex; gap: 60px; align-items: center; }
+.oee .big { font-size: 130px; }
+.quote { font-size: 34px; font-style: italic; color: var(--ink); border-left: 6px solid var(--cocoa); padding-left: 26px; max-width: 900px; margin: 0; }
+.quote small { display: block; font-style: normal; font-size: 22px; color: var(--muted); margin-top: 8px; }
+
+/* 5 · solución */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; flex: 1; }
+.part { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 44px 48px; display: flex; flex-direction: column; gap: 18px; }
+.part .tag { font-family: var(--mono); font-size: 22px; letter-spacing: .12em; text-transform: uppercase; color: var(--cocoa); }
+.part h3 { font-family: var(--display); font-size: 64px; line-height: 1; }
+.part p { margin: 0; font-size: 28px; line-height: 1.45; color: var(--muted); }
+.pill { display: inline-block; font-size: 24px; padding: 10px 22px; border-radius: 99px; background: var(--cocoa-soft); color: var(--cocoa); border: 1px solid #d8c2b3; }
+
+/* 6 · modelos */
+.flow { display: flex; gap: 8px; margin-top: 10px; position: relative; }
+.flow .st { flex: 1; height: 92px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 18px; color: var(--muted); transition: all .6s; }
+.flow .st.hl { border-color: var(--cocoa); color: var(--cocoa); background: var(--cocoa-soft); box-shadow: 0 0 24px rgba(107,58,34,.18); }
+.flow .st.hr { border-color: var(--loss); color: var(--loss); background: var(--loss-soft); box-shadow: 0 0 24px rgba(194,54,43,.2); }
+.token { position: absolute; top: -26px; left: 0; width: 46px; height: 18px; border-radius: 4px; background: linear-gradient(#6b3a22, #3b1f12); box-shadow: inset 0 3px 0 #a0663f; animation: travel 9s linear infinite; }
+@keyframes travel { from { left: 0; } to { left: calc(100% - 46px); } }
+.models { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.model { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 30px 32px; display: flex; flex-direction: column; gap: 12px; }
+.model .k { display: flex; align-items: center; gap: 16px; }
+.model .k b { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 40px; background: var(--ink); color: var(--bg); flex: none; }
+.model .k span { font-family: var(--mono); font-size: 20px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.model h3 { font-size: 36px; line-height: 1.15; }
+.model .m { font-family: var(--display); font-size: 64px; font-weight: 700; color: var(--cocoa); line-height: 1; }
+.model p { margin: 0; font-size: 23px; color: var(--muted); line-height: 1.4; }
+.reco { display: flex; align-items: center; gap: 24px; background: var(--loss-soft); border: 2px solid var(--loss); border-radius: 18px; padding: 22px 30px; font-size: 32px; }
+.reco .tri { width: 0; height: 0; border-left: 26px solid transparent; border-right: 26px solid transparent; border-bottom: 44px solid var(--loss); }
+
+/* 7 · demo */
+.demo { padding: 80px 90px 70px; gap: 18px; }
+.ipad { flex: 1; border-radius: 24px; overflow: hidden; box-shadow: 0 24px 60px rgba(36,26,21,.16), 0 0 0 1px var(--line); position: relative; background: #e9ebe8; }
+.ipad iframe, .ipad img { width: 100%; height: 100%; border: 0; background: #f8f8f6; display: block; object-fit: cover; object-position: top; }
+.demo-h { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+.demo-h h2 { font-size: 64px; }
+.demo-h p { margin: 0; font-size: 22px; color: var(--muted); font-family: var(--mono); }
+
+/* 8 · limpieza */
+.clean { display: grid; grid-template-columns: 1fr 500px; gap: 60px; align-items: start; }
+.gantt { position: relative; }
+.grow { display: grid; grid-template-columns: 330px 1fr; align-items: center; height: 46px; font-size: 22px; }
+.grow .gt { position: relative; height: 26px; }
+.gbar { position: absolute; top: 0; height: 26px; border-radius: 6px; background: var(--cocoa); transform: scaleX(0); transform-origin: left; transition: transform .9s cubic-bezier(.2,.8,.2,1), background .5s; }
+.gantt.show .gbar { transform: scaleX(1); }
+.gbar.prep { background: #c4a593; } .gantt.par .gbar.parl { background: var(--gain); }
+.gzone { position: absolute; top: -10px; bottom: 40px; border-radius: 8px; transition: left 1.4s cubic-bezier(.2,.8,.2,1), width 1.4s cubic-bezier(.2,.8,.2,1), opacity .6s; }
+.gaxis { position: relative; height: 34px; margin-left: 330px; font-family: var(--mono); font-size: 18px; color: var(--muted); }
+.gaxis span { position: absolute; transform: translateX(-50%); }
+.kpis { display: grid; gap: 14px; align-content: start; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 24px; }
+.kpi .l { font-size: 22px; color: var(--muted); }
+.kpi .v { font-family: var(--mono); font-size: 58px; font-weight: 500; line-height: 1.05; transition: color .6s; }
+.levers { display: grid; gap: 12px; }
+.lever { font-size: 24px; line-height: 1.35; display: grid; grid-template-columns: 48px 1fr; gap: 14px; }
+.lever b { width: 44px; height: 44px; border-radius: 50%; background: var(--cocoa); color: #ffffff; display: grid; place-items: center; font-family: var(--display); font-size: 28px; }
+
+/* 9 · dinero */
+.money { display: grid; grid-template-columns: 560px 1fr; gap: 90px; align-items: start; }
+.stackwrap { display: flex; gap: 50px; align-items: flex-end; height: 560px; margin-top: 50px; }
+.col { width: 230px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 0; position: relative; }
+.col .cap { position: absolute; top: -56px; left: 0; right: 0; text-align: center; font-family: var(--mono); font-size: 22px; color: var(--muted); }
+.seg { width: 100%; height: 0; transition: height 1.4s cubic-bezier(.2,.8,.2,1); border-radius: 6px; margin-top: 3px; }
+.rows { display: grid; gap: 16px; }
+.mrow { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.mrow .t { font-size: 28px; } .mrow .t small { display: block; font-size: 21px; color: var(--muted); margin-top: 4px; }
+.mrow .v { font-family: var(--display); font-size: 58px; font-weight: 700; color: var(--gain); }
+.tag2 { font-family: var(--mono); font-size: 16px; padding: 3px 10px; border-radius: 99px; margin-left: 10px; vertical-align: 4px; }
+.t-ok { background: var(--gain-soft); color: var(--gain); } .t-pot { background: var(--cocoa-soft); color: var(--cocoa); }
+.grand { display: flex; align-items: baseline; gap: 26px; }
+.grand .big { font-size: 150px; color: var(--gain); }
+
+/* 10 · escala */
+.scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 50px; align-items: end; flex: 1; padding-bottom: 50px; }
+.sc { display: flex; flex-direction: column; align-items: center; gap: 16px; height: 100%; justify-content: flex-end; }
+.sc .bar { width: 100%; height: 0; border-radius: 14px 14px 4px 4px; background: linear-gradient(180deg, #3f9a63, var(--gain)); transition: height 1.4s cubic-bezier(.2,.8,.2,1); }
+.sc .v { font-family: var(--display); font-size: 80px; font-weight: 700; color: var(--gain); }
+.sc .n { font-size: 26px; color: var(--muted); text-align: center; line-height: 1.3; } .sc .n b { color: var(--ink); font-weight: 600; }
+.sc.future .bar { background: repeating-linear-gradient(135deg, #e3f1e8 0 14px, #cfe6d7 14px 28px); border: 3px dashed var(--gain); border-bottom: none; }
+.sc.future .v { color: var(--gain); }
+.scale-legend { display: flex; flex-wrap: wrap; gap: 12px 30px; font-size: 22px; color: var(--muted); align-items: center; }
+.scale-legend i { display: inline-block; width: 26px; height: 26px; border-radius: 6px; margin-right: 10px; vertical-align: -5px; }
+
+/* 11 · hoja de ruta */
+.road { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; position: relative; }
+.phase { background: var(--panel); border: 1px solid var(--line); border-top: 6px solid var(--cocoa); border-radius: 16px; padding: 24px 26px; }
+.phase .w { font-family: var(--mono); font-size: 19px; color: var(--muted); }
+.phase h3 { font-family: var(--display); font-size: 46px; margin: 6px 0 8px; }
+.phase p { margin: 0; font-size: 22px; line-height: 1.4; color: var(--muted); }
+table.kp { width: 100%; border-collapse: collapse; font-size: 26px; }
+table.kp th { text-align: left; font-family: var(--mono); font-size: 18px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .08em; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+table.kp td { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+table.kp td.n { font-family: var(--mono); white-space: nowrap; }
+table.kp td.g { color: var(--gain); }
+
+/* 12 · cierre */
+.close { justify-content: center; align-items: flex-start; gap: 34px; }
+.close h2 { font-size: 64px; max-width: 1650px; }
+.closeline { font-family: var(--display); font-weight: 700; font-size: 104px; line-height: 1.05; letter-spacing: .005em; }
+.closeline span { white-space: nowrap; }
+.arrow { display: flex; align-items: center; gap: 40px; }
+.arrow .big { font-size: 150px; }
+.arrow .to { font-size: 90px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01s !important; } }
+</style>
+
+<div class="deck" id="deck">
+<div class="stage" id="stage" aria-live="polite">
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <div class="ticker" id="ticker" aria-label="Pérdida acumulada desde que empezó la presentación"><i></i>Pérdida desde que empezamos <b class="num" id="tick">0,00 USD</b></div>
+
+  <!-- 0 · PORTADA -->
+  <section class="scene cover" data-title="Portada" data-notes="Presentaos. Antes de pulsar: «Mientras os contamos esto, la línea Xocoleta sigue perdiendo dinero». Al pulsar arranca el contador de pérdidas: 27,88 USD por cada minuto de producción.">
+    <div class="eyebrow">AI Mavericks · Reto 2 Smart Factory · Línea Xocoleta</div>
+    <h1>Melt <span>Alert</span></h1>
+    <p class="lead">La línea Xocoleta pierde dinero cada minuto. Melt Alert lo convierte en dinero recuperado.</p>
+    <div class="since" data-s="1">Desde que hemos empezado a hablar, la línea ha perdido<b class="num" id="since">0,00 USD</b></div>
+    <svg class="barsvg" viewBox="0 0 640 520" aria-hidden="true">
+      <rect x="40" y="250" width="560" height="70" rx="12" fill="#c99a62"/>
+      <rect x="40" y="225" width="560" height="34" rx="10" fill="#e3b04b"/>
+      <rect x="20" y="150" width="600" height="96" rx="26" fill="#5b3320"/>
+      <rect x="20" y="300" width="600" height="40" rx="16" fill="#5b3320"/>
+      <rect x="60" y="168" width="480" height="14" rx="7" fill="#7b4a30"/>
+      <rect class="drip" x="90" y="330" width="26" height="120" rx="13" fill="#5b3320"/>
+      <rect class="drip" x="300" y="330" width="22" height="160" rx="11" fill="#5b3320"/>
+      <rect class="drip" x="500" y="330" width="26" height="100" rx="13" fill="#5b3320"/>
+    </svg>
+  </section>
+
+  <!-- 1 · PÉRDIDAS -->
+  <section class="scene" data-title="Pérdidas" data-notes="Tres frentes, 13 semanas de datos del caso (6 jul – 2 oct). Limpieza y paros: margen no generado a 25.000 USD/h (supuesto del propio caso). Scrap: coste de material. Total ≈ 1,8 M por trimestre, ≈ 7,2 M al año.">
+    <div class="eyebrow">13 semanas de datos reales · 65 días de producción</div>
+    <h2>La línea pierde <em>1,8 millones de dólares</em> cada trimestre</h2>
+    <div class="losses">
+      <div class="lrow" data-s="1"><div class="lbl">Limpieza de las 14:00<small>margen no generado</small></div><div class="ltrack"><div class="lfill" style="--w:100%"></div></div><div class="v"><span class="count" data-to="812500">0</span> $</div></div>
+      <div class="lrow" data-s="2"><div class="lbl">Paros no programados<small>margen no generado</small></div><div class="ltrack"><div class="lfill" style="--w:78.9%"></div></div><div class="v"><span class="count" data-to="641000">0</span> $</div></div>
+      <div class="lrow" data-s="3"><div class="lbl">Scrap<small>coste de material</small></div><div class="ltrack"><div class="lfill" style="--w:41.9%"></div></div><div class="v"><span class="count" data-to="340844">0</span> $</div></div>
+    </div>
+    <div class="total" data-s="4">
+      <div class="big num"><span class="count" data-to="1794344">0</span> $</div>
+      <div class="year">por trimestre<b>≈ 7,2 M $ al año</b></div>
+    </div>
+    <div class="foot">Fuente: fct_oee_minute, fct_scrap_minute y HTML del caso («Where the money goes»). Margen: 25.000 USD/h, supuesto del caso.</div>
+  </section>
+
+  <!-- 2 · SCRAP CONCENTRADO -->
+  <section class="scene" data-title="Scrap" data-notes="El scrap no está repartido. Casi todo es la barra terminada rechazada por el láser final. De esas barras, el 96 % falla en altura (algunas fallan además en largo o ancho), y casi todas en los carriles de los bordes. Solo el carril 31 es casi un 30 %. Es el defecto más caro: aparece al final, con todo el valor añadido.">
+    <div class="eyebrow">Parte 1 · Scrap</div>
+    <h2>El scrap no está repartido: <em>sale casi todo por el mismo sitio</em></h2>
+    <div class="split">
+      <div class="facts">
+        <div class="fact" data-s="1"><div class="big num">86,8 %</div><p>del coste son barras terminadas rechazadas al final<small>296.002 $ en 13 semanas, ya con chocolate</small></p></div>
+        <div class="fact" data-s="2"><div class="big num">96 %</div><p>de esas barras fallan en altura<small>algunas fallan además en largo o ancho</small></p></div>
+        <div class="fact" data-s="3"><div class="big num">&gt;80 %</div><p>de los fallos de altura salen de los 6 carriles de los bordes<small>carriles 1–3 y 30–32; el 31, casi un 30 %</small></p></div>
+      </div>
+      <div class="lanes" data-s="1"><svg id="lanes" viewBox="0 0 1000 640" aria-label="Barras rechazadas por altura en cada uno de los 32 carriles"></svg></div>
+    </div>
+  </section>
+
+  <!-- 3 · CAUSA CANDIDATA -->
+  <section class="scene" data-title="Causa" data-notes="Nuestra causa candidata está en la enrobadora: los datos muestran que la cortina de chocolate cubre los bordes más fino que el centro. No lo hemos confirmado en planta; eso lo haría el piloto. Durante todo el turno A los bordes tienen ~1,4 mm menos. Lo único que hoy lo corrige es la limpieza de las 14:00; después vuelve a empeorar durante el turno B y nadie limpia por la noche.">
+    <div class="eyebrow">Causa candidata · Enrobadora, estación 13 · a confirmar en planta</div>
+    <h2>La candidata: la cortina de chocolate <em>deja los bordes cortos</em></h2>
+    <div class="chartbox">
+      <svg id="coat" viewBox="0 0 1100 600" aria-label="Grosor de la capa de chocolate por media hora, bordes frente a centro"></svg>
+      <div style="display:grid;gap:26px">
+        <div class="card" data-s="2"><h3>Turno A, 8 horas</h3><div class="big num loss">−1,4 mm</div><p>de chocolate en los bordes frente al centro. Encaja con que el láser final las rechace por bajas.</p></div>
+        <div class="card" data-s="3"><h3>Limpieza de las 14:00</h3><p>Es lo único que hoy reequilibra la cortina. Después la diferencia vuelve a crecer y nadie limpia por la noche.</p></div>
+      </div>
+    </div>
+    <div class="foot">Grosor = altura láser de barra − altura láser de núcleo (2 min antes). Media por media hora, 6 jul – 2 oct 2026.</div>
+  </section>
+
+  <!-- 4 · PARO 14:00 -->
+  <section class="scene" data-title="Paro 14:00" data-notes="Parte 2. Cada día laborable la línea entera para de 14:00 a 14:30. No tiene almacenes intermedios: si para una estación, para todo. Como es paro planificado, el OEE lo excluye y la línea reporta 94,3 %. Con la limpieza incluida sería 91,4 %. Es margen potencial: se convierte en dinero si la producción extra se vende.">
+    <div class="eyebrow">Parte 2 · Paro programado</div>
+    <h2>Un paro que nadie apunta: <em>30 minutos cada día</em></h2>
+    <div class="day" data-s="1">
+      <div class="dayband" style="left:0;width:48.5%"></div>
+      <div class="gap" style="left:48.5%;width:3%"></div>
+      <div class="dayband" style="left:51.5%;width:48.5%"></div>
+      <div class="ticks"><span style="left:0%">06:00</span><span style="left:24.2%">10:00</span><span style="left:48.5%;color:var(--loss)">14:00</span><span style="left:75.7%">18:30</span><span style="left:100%">22:30</span></div>
+    </div>
+    <div class="cards3" data-s="2">
+      <div class="card"><h3>Al día</h3><div class="big num"><span class="count" data-to="57600">0</span></div><p>barras que no se fabrican (1.920 por minuto)</p></div>
+      <div class="card"><h3>Al día</h3><div class="big num"><span class="count" data-to="12500">0</span> $</div><p>de margen que no se genera</p></div>
+      <div class="card"><h3>Al trimestre</h3><div class="big num"><span class="count" data-to="812500">0</span> $</div><p>≈ 3,25 M $ al año</p></div>
+    </div>
+    <div class="oee" data-s="3">
+      <div><div class="eyebrow">OEE reportado</div><div class="big num">94,3 %</div></div>
+      <div><div class="eyebrow">OEE real con la limpieza</div><div class="big num loss">91,4 %</div></div>
+      <p class="quote">«14:00, half an hour, every weekday. We don't write it down as a breakdown.»<small>Operadores de la línea, en el caso</small></p>
+    </div>
+  </section>
+
+  <!-- 5 · SOLUCIÓN -->
+  <section class="scene" data-title="Solución" data-notes="Una sola app para el operario con las dos soluciones. Usa los datos por minuto que la línea ya genera: no hay que instalar sensores. Recomienda, nunca acciona máquinas; decide siempre una persona.">
+    <div class="eyebrow">La solución</div>
+    <h2>Melt Alert: <strong>una app</strong> para el operario, <strong>dos soluciones</strong></h2>
+    <div class="two">
+      <div class="part" data-s="1"><span class="tag">Parte 1 · Scrap</span><h3>Detectar el scrap antes del final de la línea</h3><p>Tres modelos de IA: uno previene el defecto de la enrobadora, otro estima el riesgo de cada lote y otro dice qué máquina revisar.</p></div>
+      <div class="part" data-s="2"><span class="tag">Parte 2 · Limpieza</span><h3>Bajar la limpieza de 30 a 16 minutos, con objetivo de 15</h3><p>Planificador SMED: preparar antes, limpiar en paralelo y hacer el relevo con la línea en marcha. Sin quitar ningún paso de higiene.</p></div>
+    </div>
+    <div data-s="3"><span class="pill">Recomienda, nunca acciona máquinas · siempre decide una persona · sin sensores nuevos</span></div>
+  </section>
+
+  <!-- 6 · MODELOS -->
+  <section class="scene" data-title="Modelos" data-notes="Tres modelos en cadena. C actúa primero: vigila la cortina y avisa entre 6 y 25 minutos antes de que los bordes se salgan del límite. En la prueba detectó el 97,7 % de los minutos con rechazo alto en los bordes (más del 10 %); de cada 10 avisos, unos 8 eran correctos (77,4 %). Si preguntan: una regla simple por hora del día rinde parecido, porque el problema sigue el horario de limpieza; C añade las lecturas de la máquina y sirve en cualquier horario. A estima si un lote acabará rechazado (mediana de 7 minutos de antelación) y decide continuar, revisar o retener. B señala qué máquina revisar: acierta el 86,4 % de las veces. Cuando coinciden, la app da una sola recomendación.">
+    <div class="eyebrow">Parte 1 · Tres modelos en cadena</div>
+    <h2>Prevenir, avisar y señalar <strong>dónde mirar</strong></h2>
+    <div class="flow" id="flow"><div class="token"></div></div>
+    <div class="models">
+      <div class="model" data-s="1"><div class="k"><b>C</b><span>1º · Prevención</span></div><h3>¿Se van a salir los bordes del límite?</h3><div class="m num">97,7 %</div><p>de los minutos con rechazo alto en los bordes, avisados con 6–25 min de margen para reajustar la cortina.</p></div>
+      <div class="model" data-s="2"><div class="k"><b>A</b><span>2º · Riesgo</span></div><h3>¿Este lote acabará en scrap?</h3><div class="m num">7 min</div><p>de antelación (mediana). Decide: continuar, revisar o retener. 276 señales de la línea.</p></div>
+      <div class="model" data-s="3"><div class="k"><b>B</b><span>3º · Diagnóstico</span></div><h3>¿Qué máquina reviso primero?</h3><div class="m num">86,4 %</div><p>de acierto al señalar la máquina; cubre el 60,6 % de los minutos con incidencia.</p></div>
+    </div>
+    <div class="reco" data-s="4"><div class="tri"></div><div><b>Una sola recomendación en pantalla:</b> «Check Caramel roller». La confirma el operario.</div></div>
+  </section>
+
+  <!-- 7 · DEMO -->
+  <section class="scene demo" data-title="Demo" data-notes="Demo en directo. Live a las 17:08: fallo del rodillo de caramelo, la app recomienda revisarlo. Pulsa play para reproducir. Forecast: modelos A, B y C. History: los carriles de los bordes. Para seguir, pulsa → con el ratón fuera de la app o usa el botón ›.">
+    <div class="demo-h"><h2>Melt Alert, en directo</h2><p id="appmode">Réplica minuto a minuto del 30 sep 2026 · datos reales</p></div>
+    <div class="ipad"><iframe id="app" title="Aplicación Melt Alert" loading="lazy"></iframe><img id="appimg" src="img/app-live.png" alt="Pantalla Live de Melt Alert" hidden></div>
+  </section>
+
+  <!-- 8 · LIMPIEZA -->
+  <section class="scene" data-title="Limpieza" data-notes="Tres palancas, ninguna quita higiene. 1) Kits de enrobadora y caramelo preparados entre 13:40 y 13:48, con la línea produciendo: la limpieza acaba 14:16 en vez de 14:22. 2) Tres equipos en paralelo; con uno solo acabaría 14:24. 3) Relevo en marcha: el turno B listo a las 14:15. Sin el relevo, aunque se limpie antes, la línea no arranca hasta las 14:30. Con las tres: 14 minutos al día. Tareas y tiempos son un escenario simulado; los 65 paros son datos reales.">
+    <div class="eyebrow">Parte 2 · Pestaña Cleaning</div>
+    <h2>La limpieza, de <em>30</em> a <strong>16 minutos</strong> <span style="font-size:52px;color:var(--muted);font-weight:600">· objetivo: 15</span></h2>
+    <div class="clean">
+      <div class="gantt" id="gantt"></div>
+      <div style="display:grid;gap:26px;align-content:start">
+        <div class="kpis">
+          <div class="kpi"><div class="l">Fin de la limpieza</div><div class="v" id="k-end">14:30</div></div>
+          <div class="kpi"><div class="l">Arranque de la línea</div><div class="v" id="k-start">14:30</div></div>
+          <div class="kpi"><div class="l">Producción recuperada al día</div><div class="v" id="k-rec">0 min</div></div>
+        </div>
+        <div class="levers">
+          <div class="lever" data-s="1"><b>1</b><span>Preparar los kits antes del paro</span></div>
+          <div class="lever" data-s="2"><b>2</b><span>Tres equipos limpiando en paralelo</span></div>
+          <div class="lever" data-s="3"><b>3</b><span>Relevo del turno B con la línea en marcha</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot">Los 65 paros de 30 min son datos del caso. Las 12 tareas, sus tiempos y los equipos son un escenario simulado.</div>
+  </section>
+
+  <!-- 9 · DINERO -->
+  <section class="scene" data-title="Dinero" data-notes="El dinero, todo como potencial. A y B: estimado con el replay de los datos de test, hasta ≈ 79.000 USD al año si se recupera el 100 % de lo que avisan; solo cuenta retener lotes malos. C ataca la causa candidata: hasta ≈ 450.000 USD al año si el rechazo de los bordes baja a la mitad. La limpieza: 14 minutos al día son ≈ 1,5 M USD al año de margen. En total, hasta ≈ 2 M USD al año por línea. Todo se confirma con un piloto de 4 semanas.">
+    <div class="eyebrow">El resultado</div>
+    <h2>De perder dinero a <strong class="g">recuperarlo</strong></h2>
+    <div class="money">
+      <div class="stackwrap" id="stack">
+        <div class="col"><div class="cap">Pérdidas / año</div><div class="seg" data-h="100" style="background:var(--loss)"></div></div>
+        <div class="col"><div class="cap">Recuperado / año</div><div class="seg" id="seg3" data-h="21.2" style="background:var(--gain)"></div><div class="seg" id="seg2" data-h="6.3" style="background:#5ea47a"></div><div class="seg" id="seg1" data-h="1.1" style="background:#1f5c37"></div></div>
+      </div>
+      <div class="rows">
+        <div class="mrow" data-s="1"><div class="t">Modelos A + B<span class="tag2 t-pot">potencial · estimado en test</span><small>si se recupera el 100 % de los lotes retenidos a tiempo</small></div><div class="v num">hasta <span class="count" data-to="79000">0</span> $</div></div>
+        <div class="mrow" data-s="2"><div class="t">Modelo C<span class="tag2 t-pot">potencial</span><small>si el rechazo de los bordes baja a la mitad</small></div><div class="v num">hasta <span class="count" data-to="450000">0</span> $</div></div>
+        <div class="mrow" data-s="3"><div class="t">Limpieza de 14 minutos menos<span class="tag2 t-pot">margen potencial</span><small>si las 26.880 barras más al día se producen y se venden</small></div><div class="v num">hasta <span class="count" data-to="1520000">0</span> $</div></div>
+        <div class="grand" data-s="4"><div class="big">hasta 2 M $</div><div style="font-size:34px">al año<br><span class="muted">por línea</span></div></div>
+      </div>
+    </div>
+    <div class="foot">Todo es potencial: A + B, estimado con el replay de 10 días de test; C y limpieza, a confirmar con un piloto. Sin doble conteo.</div>
+  </section>
+
+  <!-- 10 · ESCALA -->
+  <section class="scene" data-title="Escala" data-notes="Esto es visión de futuro, no líneas que existan hoy: el caso solo describe la línea Xocoleta. La idea es que Melt Alert no está hecho a medida de una línea; si Fandonat lo lleva a otras líneas, en esta u otras plantas, con la misma limpieza diaria y un margen por hora parecido, cada una aportaría ≈ 1,5 M $ al año. Es un potencial condicionado: supone que el 100 % de los minutos recuperados vuelve a producir y que esa producción se vende. Solo contamos la limpieza; el scrap iría aparte porque los modelos se reentrenan con el histórico de cada línea. No hacen falta sensores nuevos.">
+    <div class="eyebrow">Visión de futuro · escalar el proyecto</div>
+    <h2>Si llevamos Melt Alert a más líneas, <strong class="g">ganaríamos</strong> mucho más</h2>
+    <div class="scale-legend"><span class="tag2" style="font-size:22px;background:var(--cocoa);color:#ffffff;padding:6px 16px;margin-left:0">Calculado con el ahorro de la limpieza de las 14:00</span><span><i style="background:var(--gain)"></i>Hoy: la línea Xocoleta</span><span><i style="background:repeating-linear-gradient(135deg,#e3f1e8 0 6px,#cfe6d7 6px 12px);border:2px dashed var(--gain)"></i>Escenario de escalado: líneas nuevas a las que llevaríamos la app</span><span class="tag2 t-pot" style="font-size:20px">potencial condicionado</span></div>
+    <div class="scale" id="scale">
+      <div class="sc"><div class="v num" data-s="1">1,5 M $</div><div class="bar" data-h="5"></div><div class="n"><b>Hoy</b><br>línea Xocoleta</div></div>
+      <div class="sc future"><div class="v num" data-s="2">7,6 M $</div><div class="bar" data-h="25"></div><div class="n"><b>Escalando</b><br>a 5 líneas</div></div>
+      <div class="sc future"><div class="v num" data-s="3">15,2 M $</div><div class="bar" data-h="50"></div><div class="n"><b>Escalando</b><br>a 10 líneas</div></div>
+      <div class="sc future"><div class="v num" data-s="4">30,3 M $</div><div class="bar" data-h="100"></div><div class="n"><b>Escalando</b><br>a 20 líneas</div></div>
+    </div>
+    <div class="foot">14 min recuperados al día por línea. Potencial condicionado: supone producir y vender todo lo recuperado. No son líneas actuales.</div>
+  </section>
+
+  <!-- 11 · HOJA DE RUTA -->
+  <section class="scene" data-title="Hoja de ruta" data-notes="Cada fase empieza solo si la anterior pasa su control: calidad valida que no se pierde ningún paso de higiene y el ahorro se mide con los datos de la línea.">
+    <div class="eyebrow">Hoja de ruta</div>
+    <h2>Un piloto medible en <strong>12 semanas</strong></h2>
+    <div class="road">
+      <div class="phase" data-s="1"><div class="w">Semanas 1–4</div><h3>1 · Medir</h3><p>Registrar cada tarea con la app (QR por estación) y sustituir los tiempos simulados por reales.</p></div>
+      <div class="phase" data-s="2"><div class="w">Semanas 5–8</div><h3>2 · SMED</h3><p>Kits antes del paro y tres equipos en paralelo. Calidad valida cada cambio.</p></div>
+      <div class="phase" data-s="3"><div class="w">Semanas 9–12</div><h3>3 · Relevo y cortina</h3><p>Turno B listo a las 14:15 y reajuste de la cortina disparado por el modelo C.</p></div>
+      <div class="phase" data-s="4"><div class="w">Trimestre 2+</div><h3>4 · Escalar</h3><p>Despliegue por oleadas, empezando por las líneas con más margen por hora.</p></div>
+    </div>
+    <table class="kp" data-s="5">
+      <tr><th>Indicador</th><th>Hoy</th><th>Meta</th></tr>
+      <tr><td>Minutos de limpieza al día</td><td class="n">30</td><td class="n g">15 (la demo ya llega a 16)</td></tr>
+      <tr><td>OEE con la limpieza incluida</td><td class="n">91,4 %</td><td class="n g">≈ 92,9 %</td></tr>
+      <tr><td>Coste de scrap de barra terminada</td><td class="n">296.002 $ / trimestre</td><td class="n g">hasta −6,7 % con A + B · hasta −40 % con C</td></tr>
+      <tr><td>Pasos de higiene cumplidos</td><td class="n">100 %</td><td class="n g">100 %</td></tr>
+    </table>
+  </section>
+
+  <!-- 12 · CIERRE -->
+  <section class="scene close" data-title="Cierre" data-notes="Cierre: de los 7,2 M $ que se pierden al año, recuperamos hasta 2 M $ por línea. No es que las pérdidas bajen a 2 M: son 2 M recuperados de esos 7,2 M. Recordad el contador: es lo que ha perdido la línea mientras hablábamos. Gracias.">
+    <div class="eyebrow">Melt Alert · AI Mavericks</div>
+    <div class="closeline" data-s="1">De <span class="loss">7,2 M $</span> perdidos al año,<br>recuperamos <span class="gain">hasta 2 M $</span></div>
+    <h2 data-s="2">De pérdidas que nadie ve a <strong class="g">dinero recuperado</strong> cada día</h2>
+    <p class="since" data-s="3">Mientras os lo contábamos, la línea ha perdido<b class="num" id="since2">0,00 USD</b></p>
+    <p class="lead" data-s="4" style="color:var(--ink);font-size:44px">Gracias.</p>
+  </section>
+
+  <aside class="notes" id="notes" hidden><h4 id="notes-t">Notas</h4><div id="notes-b"></div></aside>
+  <nav class="ctrl" aria-label="Control de la presentación">
+    <button id="prev" aria-label="Anterior">‹</button><span id="pos">1 / 13</span><button id="next" aria-label="Siguiente">›</button>
+    <button id="fs" aria-label="Pantalla completa">⛶</button><button id="nt" aria-label="Mostrar notas">N</button>
+  </nav>
+</div>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById("stage"), deck = document.getElementById("deck");
+  const scenes = [...stage.querySelectorAll(".scene")];
+  const fmt = (n, d = 0) => n.toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: "always" });
+
+  // ---------- escala del escenario ----------
+  function fit() {
+    const w = deck.clientWidth, h = deck.clientHeight, s = Math.min(w / 1920, h / 1080);
+    stage.style.transform = `scale(${s}) translate(-50%, -50%)`;
+    stage.style.left = "50%"; stage.style.top = "50%";
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+    stage.style.transformOrigin = "center center";
+  }
+  addEventListener("resize", fit); fit();
+
+  // ---------- contador de pérdidas en directo ----------
+  // 1.794.344 USD por trimestre / 64.350 minutos de producción = 27,88 USD por minuto
+  const PER_SEC = 1794344 / 64350 / 60;
+  let t0 = null;
+  const tickEl = document.getElementById("tick"), ticker = document.getElementById("ticker");
+  function startTicker() { if (t0 === null) { t0 = performance.now(); ticker.classList.add("on"); } }
+  function loop() {
+    if (t0 !== null) {
+      const v = fmt((performance.now() - t0) / 1000 * PER_SEC, 2) + " USD";
+      tickEl.textContent = v;
+      document.getElementById("since").textContent = v;
+      document.getElementById("since2").textContent = v;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---------- contadores que suben ----------
+  function countUp(el) {
+    if (el.dataset.done) return; el.dataset.done = 1;
+    const to = +el.dataset.to, d0 = performance.now(), dur = 1600;
+    const step = now => { const k = Math.min(1, (now - d0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(Math.round(to * e)); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function resetCount(el) { delete el.dataset.done; el.textContent = "0"; }
+
+  // ---------- 2 · carriles ----------
+  const LANES = [268095, 194464, 151827, 14187, 14271, 14359, 14367, 10342, 13988, 13858, 12875, 13321, 13554, 13722, 9146, 9428, 9628, 9129, 9165, 9758, 10471, 9459, 10092, 11508, 10194, 11336, 14550, 22027, 15243, 52445, 478764, 162940];
+  (function lanes() {
+    const svg = document.getElementById("lanes"), max = Math.max(...LANES), H = 560, bw = 1000 / 32;
+    let s = `<line x1="0" x2="1000" y1="${H}" y2="${H}" stroke="#ddd8d3"/>`;
+    LANES.forEach((v, i) => {
+      const h = v / max * (H - 30), edge = i < 3 || i > 28;
+      s += `<rect class="lanebar ${edge ? "edge" : "ctr"}" data-h="${h}" x="${i * bw + 4}" y="${H}" width="${bw - 8}" height="0" rx="4" fill="#6b3a22"/>`;
+      if ([0, 7, 15, 23, 30, 31].includes(i)) s += `<text x="${i * bw + bw / 2}" y="${H + 34}" text-anchor="middle" font-size="22">${i + 1}</text>`;
+    });
+    s += `<text x="0" y="${H + 74}" font-size="20">carril</text><text id="l31" x="${30 * bw + bw / 2}" y="20" text-anchor="end" font-size="26" style="opacity:0;transition:opacity .6s;fill:#c2362b">carril 31 ≈ 30 % →</text>`;
+    svg.innerHTML = s;
+  })();
+  function lanesStep(step) {
+    document.querySelectorAll("#lanes .lanebar").forEach(r => {
+      const h = step >= 1 ? +r.dataset.h : 0;
+      r.setAttribute("height", h); r.setAttribute("y", 560 - h);
+      const edge = r.classList.contains("edge");
+      r.setAttribute("fill", step >= 3 ? (edge ? "#c2362b" : "#d9cdc4") : "#6b3a22");
+    });
+    document.getElementById("l31").style.opacity = step >= 3 ? 1 : 0;
+  }
+
+  // ---------- 3 · capa de chocolate ----------
+  const T = [360, 390, 420, 450, 480, 510, 540, 570, 600, 630, 660, 690, 720, 750, 780, 810, 840, 870, 900, 930, 960, 990, 1020, 1050, 1080, 1110, 1140, 1170, 1200, 1230, 1260, 1290, 1320];
+  const EDGE = [3.01, 2.97, 2.96, 2.95, 2.96, 2.96, 2.97, 2.96, 2.95, 2.96, 2.96, 2.96, 2.96, 2.96, 2.96, 2.96, 3.63, 3.61, 3.58, 3.54, 3.5, 3.46, 3.42, 3.39, 3.34, 3.31, 3.27, 3.24, 3.19, 3.17, 3.12, 3.08, 3.04];
+  const CTR = [4.34, 4.36, 4.36, 4.37, 4.38, 4.38, 4.38, 4.37, 4.37, 4.38, 4.38, 4.38, 4.38, 4.38, 4.38, 4.38, 3.91, 3.92, 3.95, 3.98, 4.01, 4.03, 4.06, 4.09, 4.1, 4.14, 4.16, 4.19, 4.22, 4.25, 4.27, 4.3, 4.32];
+  (function coat() {
+    const svg = document.getElementById("coat"), L = 80, R = 1080, TOP = 20, B = 520;
+    const X = t => L + (t - 360) / (1350 - 360) * (R - L), Y = v => B - (v - 2.6) / (4.6 - 2.6) * (B - TOP);
+    const path = (a) => T.map((t, i) => (i ? (T[i] - T[i - 1] > 30 ? "M" : "L") : "M") + X(t + 15).toFixed(1) + " " + Y(a[i]).toFixed(1)).join("");
+    let s = "";
+    [3.0, 3.5, 4.0, 4.5].forEach(v => s += `<line x1="${L}" x2="${R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#ddd8d3"/><text x="${L - 14}" y="${Y(v) + 8}" text-anchor="end" font-size="22">${fmt(v, 1)}</text>`);
+    [["06:00", 360], ["10:00", 600], ["14:00", 840], ["18:00", 1080], ["22:00", 1320]].forEach(([l, t]) => s += `<text x="${X(t)}" y="${B + 40}" text-anchor="middle" font-size="22">${l}</text>`);
+    s += `<rect x="${X(360)}" y="${TOP}" width="${X(840) - X(360)}" height="${B - TOP}" fill="#c2362b" opacity=".05"/>`;
+    s += `<text x="${X(600)}" y="${TOP + 30}" text-anchor="middle" font-size="24" style="fill:#c2362b">turno A</text><text x="${X(1110)}" y="${TOP + 30}" text-anchor="middle" font-size="24">turno B</text>`;
+    s += `<g id="cleanmk" style="opacity:0;transition:opacity .6s"><line x1="${X(855)}" x2="${X(855)}" y1="${TOP}" y2="${B}" stroke="#6b3a22" stroke-width="3" stroke-dasharray="8 6"/><text x="${X(855) + 12}" y="${B - 16}" font-size="22" style="fill:#6b3a22">limpieza 14:00</text></g>`;
+    s += `<path id="pc" class="drawline" d="${path(CTR)}" fill="none" stroke="#a39488" stroke-width="5"/>`;
+    s += `<path id="pe" class="drawline" d="${path(EDGE)}" fill="none" stroke="#c2362b" stroke-width="6"/>`;
+    s += `<text id="lc" x="${X(1320)}" y="${Y(4.32) - 16}" text-anchor="end" font-size="24" style="opacity:0;transition:opacity .6s">centro</text>`;
+    s += `<text id="le" x="${X(1320)}" y="${Y(3.04) + 36}" text-anchor="end" font-size="24" style="opacity:0;transition:opacity .6s;fill:#c2362b">bordes</text>`;
+    s += `<text x="${L}" y="${B + 80}" font-size="20">grosor de la capa de chocolate (mm)</text>`;
+    svg.innerHTML = s;
+  })();
+  function coatStep(step) {
+    document.getElementById("pc").classList.toggle("in", step >= 1);
+    document.getElementById("lc").style.opacity = step >= 1 ? 1 : 0;
+    document.getElementById("pe").classList.toggle("in", step >= 2);
+    document.getElementById("le").style.opacity = step >= 2 ? 1 : 0;
+    document.getElementById("cleanmk").style.opacity = step >= 3 ? 1 : 0;
+  }
+
+  // ---------- 6 · estaciones ----------
+  const ST = ["MIX", "DST", "MLD", "CAM", "OVN", "BCL", "CAM", "BCM", "BCR", "CAR", "GUI", "LSR", "ENR", "LSR", "CCL"];
+  document.getElementById("flow").insertAdjacentHTML("beforeend", ST.map((s, i) => `<div class="st" data-i="${i}">${s}</div>`).join(""));
+  function flowStep(step) {
+    document.querySelectorAll("#flow .st").forEach(el => {
+      const i = +el.dataset.i;
+      el.classList.toggle("hl", (step >= 1 && i === 12) || (step >= 2 && step < 4 && (i === 10 || i === 11 || i === 13)));
+      el.classList.toggle("hr", step >= 3 && i === 9);
+    });
+  }
+
+  // ---------- 7 · app en directo ----------
+  let appLoaded = false;
+  // Si la presentación se abre en local (presentar.py) y el servidor de la app está en marcha,
+  // la demo muestra la app real: pestaña Cleaning y asistente de IA (Ollama) incluidos.
+  // En claude.ai no se puede llegar a un servidor local, así que se usa la réplica sin servidor.
+  const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const LIVE_URL = (new URLSearchParams(location.search).get("app") || "http://127.0.0.1:8000/").replace(/\/?$/, "/");
+  function loadApp() {
+    if (appLoaded) return; appLoaded = true;
+    const fr = document.getElementById("app"), mode = document.getElementById("appmode");
+    if (!LOCAL) return loadReplica();
+    fetch(LIVE_URL + "api/health", { mode: "no-cors", cache: "no-store" }).then(() => {
+      fr.src = LIVE_URL;
+      mode.textContent = "App completa en directo · con el asistente de IA";
+    }).catch(loadReplica);
+  }
+  function loadReplica() {
+    const fr = document.getElementById("app"), img = document.getElementById("appimg");
+    fetch("app.html").then(r => { if (!r.ok) throw 0; return r.text(); }).then(html => {
+      // la app ocupa todo el marco: sin el pie de foto y sin el ancho máximo del modo escritorio
+      const fitCss = "<style>body{padding:10px!important}.caption{display:none!important}.stage{max-width:none!important}.ipad{padding:14px!important;border-radius:28px!important;box-shadow:none!important}.app{height:calc(100vh - 48px)!important;max-height:none!important;min-height:0!important}</style>";
+      fr.srcdoc = html.replace("</head>", fitCss + "</head>").replace(/<body>/, m => html.includes("</head>") ? m : fitCss + m);
+      fr.addEventListener("load", () => {
+        try { fr.contentWindow.addEventListener("keydown", e => { if (["PageDown", "PageUp"].includes(e.key)) { e.preventDefault(); e.key === "PageDown" ? next() : prev(); } }); } catch (e) {}
+      }, { once: true });
+    }).catch(() => { fr.hidden = true; img.hidden = false; });
+  }
+  setTimeout(loadApp, 1500);
+
+  // ---------- 8 · gantt de limpieza ----------
+  const TASKS = [["Preparar kit de caramelo", 820, 826, "prep"], ["Preparar kit de enrobadora", 820, 828, "prep"], ["Preparar materiales comunes", 820, 824, "prep"],
+    ["Registrar aislamiento de equipos", 840, 842, ""], ["Limpiar estación de crema", 842, 847, "parl"], ["Limpiar estación de caramelo", 842, 848, "parl"],
+    ["Limpiar enrobadora", 842, 850, "parl"], ["Revisar guillotina", 842, 845, "parl"], ["Montar y revisar caramelo", 848, 850, ""],
+    ["Montar y revisar enrobadora", 850, 853, ""], ["Inspección final", 853, 855, ""], ["Checklist final", 855, 856, ""]];
+  const G0 = 815, G1 = 875, GX = t => (t - G0) / (G1 - G0) * 100;
+  (function gantt() {
+    const el = document.getElementById("gantt");
+    let s = `<div class="gzone" id="z-stop" style="left:calc(330px + (100% - 330px) * ${GX(840) / 100});width:calc((100% - 330px) * ${(GX(870) - GX(840)) / 100});background:rgba(194,54,43,.08);border:2px solid rgba(194,54,43,.5)"></div>`;
+    s += `<div class="gzone" id="z-rec" style="left:calc(330px + (100% - 330px) * ${GX(856) / 100});width:calc((100% - 330px) * ${(GX(870) - GX(856)) / 100});background:rgba(44,122,75,.12);border:2px solid var(--gain);opacity:0"></div>`;
+    s += TASKS.map(([n, a, b, c]) => `<div class="grow"><span>${n}</span><div class="gt"><div class="gbar ${c}" style="left:${GX(a)}%;width:${GX(b) - GX(a)}%;transition-delay:${(a - 820) * 25}ms"></div></div></div>`).join("");
+    s += `<div class="gaxis">${[820, 830, 840, 850, 860, 870].map(t => `<span style="left:${GX(t)}%">${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}</span>`).join("")}</div>`;
+    el.innerHTML = s;
+  })();
+  function ganttStep(step) {
+    const g = document.getElementById("gantt");
+    g.classList.toggle("show", step >= 1); g.classList.toggle("par", step >= 2);
+    const stopEnd = step >= 3 ? 856 : 870;
+    document.getElementById("z-stop").style.width = `calc((100% - 330px) * ${(GX(stopEnd) - GX(840)) / 100})`;
+    document.getElementById("z-rec").style.opacity = step >= 3 ? 1 : 0;
+    const set = (id, v, col) => { const e = document.getElementById(id); e.textContent = v; e.style.color = col || ""; };
+    set("k-end", step >= 1 ? "14:16" : "14:30", step >= 1 ? "var(--gain)" : "");
+    set("k-start", step >= 3 ? "14:16" : "14:30", step >= 3 ? "var(--gain)" : "var(--loss)");
+    const rec = document.getElementById("k-rec");
+    if (step >= 3) { if (!rec.dataset.done) { rec.dataset.done = 1; let k = 0; const iv = setInterval(() => { k++; rec.textContent = k + " min"; if (k >= 14) { clearInterval(iv); rec.innerHTML = '14 min<div style="font-size:24px;color:var(--muted);margin-top:2px">≈ 379.000 $ de margen al trimestre</div>'; } }, 70); } rec.style.color = "var(--gain)"; }
+    else { delete rec.dataset.done; rec.textContent = "0 min"; rec.style.color = "var(--loss)"; }
+  }
+
+  // ---------- 9 · dinero ----------
+  function moneyStep(step) {
+    const H = 540, lossSeg = document.querySelector("#stack .col:first-child .seg");
+    lossSeg.style.height = (step >= 0 ? H : 0) + "px";
+    [["seg1", 1], ["seg2", 2], ["seg3", 3]].forEach(([id, k]) => { const e = document.getElementById(id); e.style.height = (step >= k ? +e.dataset.h / 100 * H : 0) + "px"; });
+  }
+
+  // ---------- 10 · escala ----------
+  function scaleStep(step) {
+    document.querySelectorAll("#scale .bar").forEach((b, i) => b.style.height = (step >= i + 1 ? +b.dataset.h / 100 * 250 : 0) + "px");
+  }
+
+  const HOOKS = { Scrap: lanesStep, Causa: coatStep, Modelos: flowStep, Limpieza: ganttStep, Dinero: moneyStep, Escala: scaleStep, Demo: loadApp };
+
+  // ---------- navegación ----------
+  let si = 0, step = 0;
+  const maxStep = sc => Math.max(0, ...[...sc.querySelectorAll("[data-s]")].map(e => +e.dataset.s));
+  const dots = document.getElementById("dots");
+  dots.innerHTML = scenes.map(() => "<i></i>").join("");
+  function render() {
+    scenes.forEach((sc, i) => sc.classList.toggle("active", i === si));
+    const sc = scenes[si];
+    sc.querySelectorAll("[data-s]").forEach(e => {
+      const on = +e.dataset.s <= step;
+      e.classList.toggle("in", on);
+      e.querySelectorAll(".count").forEach(c => on ? setTimeout(() => countUp(c), 250) : resetCount(c));
+    });
+    const hook = HOOKS[sc.dataset.title]; if (hook) hook(step);
+    [...dots.children].forEach((d, i) => { d.className = i < si ? "on" : i === si ? "cur" : ""; });
+    document.getElementById("pos").textContent = `${si + 1} / ${scenes.length}`;
+    document.getElementById("notes-t").textContent = `${si + 1} · ${sc.dataset.title}`;
+    document.getElementById("notes-b").textContent = sc.dataset.notes || "";
+    ticker.style.visibility = si === 0 || sc.classList.contains("close") ? "hidden" : "visible";
+    try { location.hash = "s" + (si + 1); } catch (e) {}
+  }
+  function next() {
+    startTicker();
+    if (step < maxStep(scenes[si])) step++;
+    else if (si < scenes.length - 1) { si++; step = 0; }
+    render();
+  }
+  function prev() {
+    if (step > 0) step--;
+    else if (si > 0) { si--; step = maxStep(scenes[si]); }
+    render();
+  }
+  window.next = next; window.prev = prev;
+  document.getElementById("next").onclick = e => { e.stopPropagation(); next(); };
+  document.getElementById("prev").onclick = e => { e.stopPropagation(); prev(); };
+  document.getElementById("fs").onclick = e => { e.stopPropagation(); const r = document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : r.requestFullscreen?.())?.catch?.(() => {}); };
+  const notes = document.getElementById("notes");
+  document.getElementById("nt").onclick = e => { e.stopPropagation(); notes.hidden = !notes.hidden; };
+  addEventListener("keydown", e => {
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === "n" || e.key === "N") notes.hidden = !notes.hidden;
+    else if (e.key === "f" || e.key === "F") document.getElementById("fs").click();
+    else if (e.key === "Home") { si = 0; step = 0; render(); }
+  });
+  stage.addEventListener("click", e => {
+    if (e.target.closest(".ctrl, .notes, .ipad")) return;
+    (e.clientX < innerWidth * 0.2) ? prev() : next();
+  });
+  const h = /^#s(\d+)$/.exec(location.hash); if (h) si = Math.min(scenes.length - 1, Math.max(0, +h[1] - 1));
+  render();
+})();
+</script>

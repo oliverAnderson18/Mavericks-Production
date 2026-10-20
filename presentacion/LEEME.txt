@@ -1,0 +1,23 @@
+PRESENTACIÓN DE MELT ALERT (con la app real y el asistente de IA en la demo)
+==========================================================================
+
+Antes de presentar
+  1. Abre Ollama y descarga el modelo una vez:   ollama pull qwen3:4b-instruct
+  2. Ten los 9 CSV del caso en la carpeta data del repositorio (o indica otra con --data-dir).
+
+Para arrancar, desde la raíz del repositorio Mavericks-Production:
+
+  python presentacion\presentar.py
+
+  Si los CSV están en otra carpeta:
+  python presentacion\presentar.py --data-dir "RUTA\data"
+
+  Si la carpeta presentacion está fuera del repositorio, indícalo con --repo:
+  python "RUTA\presentacion\presentar.py" --repo "RUTA\Mavericks-Production" --data-dir "RUTA\data"
+
+  - Arranca la app en http://127.0.0.1:8000 y abre la presentación en el navegador.
+  - En la terminal debe salir "App completa en marcha". Deja la terminal abierta; Ctrl+C lo cierra todo.
+  - En la escena 8 debe poner arriba "App completa en directo · con el asistente de IA".
+    Si pone "Réplica minuto a minuto…", la app no ha arrancado: revisa la carpeta de los CSV y que Ollama esté abierto.
+
+Teclas: clic, flecha → o el mando para avanzar · ← para volver · F pantalla completa · N notas · Inicio vuelve al principio.
