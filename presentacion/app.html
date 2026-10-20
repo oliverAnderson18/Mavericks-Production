@@ -1003,13 +1003,12 @@ const EASY = {
   "P-BCR-FAN": ["Cream cooler fan fault", "Bars leave the cooler above 26 °C.", ["Check the cooler fan."]],
   "P-CAR-WRAP": ["Caramel wrapped around the roller", "The caramel roller moves unevenly and stops.", ["Arrange roller cleaning.", "Check caramel temperature is 52 °C."]],
   "P-CAR-COLD": ["Cold caramel", "Caramel spreads poorly below 46 °C.", ["Restore caramel temperature to 52 °C.", "Check tank heating."]],
-  "P-CAR-HOT": ["Possible excess caramel", "A wide roller gap and high caramel temperature are consistent with excess deposition. Confirm the product impact downstream.", [
-    "Contain the affected production: note when the deviation began and ask quality whether that production window needs inspection or a hold.",
-    "Check the approved recipe and recent setting changes. This demo uses 1.8 mm and 52 °C; confirm these are the correct targets before adjusting. Compare actual readings with commands: an incorrect command and a machine failing to follow its command need different fixes.",
-    "Prioritise verifying the roller gap deviation. Ask an authorised operator to verify the indicated gap against the approved setup procedure. If the command is correct but the gap does not follow it, escalate to maintenance instead of repeatedly changing the target.",
-    "Check the temperature trend and controller status. If the reading remains above target or oscillates despite the correct command, ask maintenance to check temperature measurement and control. Avoid compensating by changing downstream machines without evidence.",
-    "Log each approved intervention and its time. Allow affected product to reach the downstream measurement point using the line's actual transit time; compare core height, final height and reject rate before and after. A return to target at CAR alone does not demonstrate product recovery.",
-    "If readings disagree, settings drift again or downstream quality fails to recover, escalate with the recorded timeline. Keep the affected production under quality review until it is released."
+  "P-CAR-HOT": ["Possible excess caramel", "Wide roller gap and high temperature may cause excess deposition.", [
+    "Check recent recipe or setting changes.",
+    "Verify roller gap against the approved target.",
+    "Check whether temperature follows its setpoint.",
+    "After an approved adjustment, check downstream height and rejects once product arrives.",
+    "If the deviation persists, contact maintenance; ask quality to review affected product."
   ]],
   "P-GUI-SYNC": ["Guillotine timing fault", "Bar lengths vary.", ["Resynchronise the guillotine with line speed."]],
   "P-GUI-BLADE": ["Worn or cold blade", "The blade tears caramel instead of cutting cleanly.", ["Arrange a blade change.", "Preheat the blade to 40 °C before use."]],
