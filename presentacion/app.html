@@ -251,6 +251,136 @@ summary { cursor: pointer; font-weight: 600; }
   .pred .ci-cell { grid-column: 1 / -1; }
   .msg { max-width: 94%; }
 }
+/* Melt Alert visual refresh: shared by the standalone app and pitch demo. */
+body{margin:0;background:var(--surface);padding-block:24px;-webkit-font-smoothing:antialiased}
+.stage{max-width:1480px;gap:14px}
+.caption{padding:0 6px;font-size:11px;letter-spacing:.025em}
+.ipad{position:relative;padding:19px;border-radius:40px;background:#1c1b1d;border:1px solid #454347;box-shadow:0 0 0 2px #b7b5b2,0 22px 54px #241a1524}
+.ipad::before{content:"";position:absolute;left:6px;top:50%;width:5px;height:5px;border-radius:50%;background:#383b42;box-shadow:inset 0 0 0 1px #484b52;transform:translateY(-50%)}
+.app{height:900px;max-height:calc(100dvh - 132px);min-height:600px;border-radius:21px;grid-template-columns:204px minmax(0,1fr)}
+.rail{background:var(--panel);border-right:1px solid var(--line);padding:28px 14px 18px;gap:7px;color:var(--ink)}
+.brand{font-family:var(--body);font-size:23px;letter-spacing:-.045em;padding:0 10px 7px;color:var(--ink)}
+.brand-mark{color:var(--accent);filter:none}
+.brand-sub{color:var(--muted);font-size:11px;padding:0 10px 30px}
+.tab{color:var(--muted);padding:13px 12px;border-radius:9px;font-size:13px;transition:background .18s,color .18s}
+.tab svg{width:18px;height:18px;opacity:.85}
+.tab:hover{background:var(--surface);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:none}
+.tab .badge{box-shadow:none;font-size:10px;min-width:17px;text-align:center}
+.rail-foot{border-color:var(--line);color:var(--muted);font-size:10px;line-height:1.7;padding:16px 10px 0}
+.top{min-height:80px;padding:18px 26px;gap:10px 14px;background:var(--panel)}
+.top h1{font-family:var(--body);font-size:22px;letter-spacing:-.045em;font-weight:600}
+.status{font-size:11px;padding:6px 10px}
+.status::before{width:6px;height:6px}
+.player{gap:12px}.clock{font-size:19px;letter-spacing:-.04em}
+.pbtn{width:36px;height:36px;box-shadow:0 3px 8px #241a1510}
+.seg{border-radius:9px}.seg button{min-height:32px;font-size:11px;padding:5px 9px}
+#scrub{width:130px;height:4px}
+.view{padding:24px 26px 28px;gap:20px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.panel{border-color:color-mix(in srgb,var(--line) 70%,transparent);border-radius:14px;padding:21px 22px;box-shadow:none}
+.ph{margin-bottom:18px;gap:10px}.ph h2{font-family:var(--body);font-size:15px;font-weight:600;letter-spacing:-.025em;text-transform:none;line-height:1.5}
+.ph .hint{font-size:11px}.grid2,.grid3,.finds{gap:20px}
+.lbl{font-size:10px;letter-spacing:.09em}
+.alert{padding:20px 22px;border-radius:16px;gap:18px}
+.alert.crit{background:var(--panel);border-color:color-mix(in srgb,var(--crit) 22%,var(--line))}
+.alert.warn{background:var(--panel);border-color:color-mix(in srgb,var(--warn) 22%,var(--line))}
+.alert.ok{background:var(--panel);border-color:var(--line)}
+.alert h3{font-size:18px;letter-spacing:-.03em;margin-bottom:5px}.alert p{font-size:12px;line-height:1.65}
+.alert .big{font-size:36px}.alert .big.notice-icon{display:grid;place-items:center;min-width:34px;width:34px;height:34px;border:1px solid currentColor;border-radius:50%;font-family:var(--body);font-size:21px;font-weight:500;background:var(--crit-soft)}.alert .act,.step .act{font-size:12px;box-shadow:none}
+.steps{gap:14px}.step{border-radius:15px;padding:18px;gap:9px;box-shadow:0 3px 14px #241a1503}
+.step.lv-crit,.step.lv-warn,.step.lv-ok{background:var(--panel);border-color:var(--line)}
+.step.lv-crit .step-n{background:var(--crit-soft);color:var(--crit)}.step.lv-warn .step-n{background:var(--warn-soft);color:var(--warn)}.step.lv-ok .step-n{background:var(--ok-soft);color:var(--ok)}
+.step-big{font-family:var(--body);font-size:21px;letter-spacing:-.04em}.step-p{font-size:12px;line-height:1.6}.step-meta{font-size:11px}
+.step-n{border-radius:7px;width:25px;height:25px;background:var(--accent-soft);color:var(--accent);font-size:11px}.step-act{background:var(--surface);padding:9px 11px;line-height:1.6}
+.flow{gap:6px;padding-bottom:8px}.st{border-radius:10px;padding:10px 6px;min-height:77px;gap:5px}.st.track{border-color:var(--line)}.st .n{font-size:16px}.st.track[aria-pressed="true"]{border-color:var(--accent)}
+.st.hot{border-color:color-mix(in srgb,var(--crit) 55%,var(--line))}.st.warm{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+.kpi .v{font-size:42px;letter-spacing:-.025em;margin-top:10px}.kpi .d{line-height:1.6;margin-top:8px}
+.pred{padding:17px 0;gap:12px}.pred .nm{font-size:12px}.pred .nm small{font-size:11px;margin-top:5px}.ci .track{height:5px}.ci .band{border-radius:6px;opacity:.2}
+.pill{padding:5px 10px;font-size:10px;font-weight:600}.prose{font-size:12px;line-height:1.75}
+.params{gap:19px}.prm{gap:6px 10px}.prm .name{font-size:12px}.prm .val{font-size:12px}.gauge{height:7px}.prm .rng{font-size:10px}
+.mlist{gap:9px}.mrow{padding:13px;border-radius:11px;background:var(--panel);font-size:12px;transition:border-color .15s,background .15s}
+.mrow:hover{border-color:var(--accent)}.prob{padding:17px 0;gap:9px}.prob .hd{font-size:14px}.prob .sym,.prob .sol{font-size:12px;line-height:1.65}.todo{gap:8px;padding-left:19px}
+.find{padding-left:16px;border-left-width:3px}.find h3{font-size:14px}.find p{font-size:12px;line-height:1.7}
+table.t th{font-size:10px;padding:10px}table.t td{padding:12px 10px;font-size:12px}table.t tbody tr:hover{background:var(--surface)}
+.legend{font-size:11px;gap:16px;margin-top:8px}.more{font-size:12px;border-radius:10px;background:var(--panel)}
+.app .smed-panel{padding:21px;border-radius:17px;box-shadow:0 4px 18px #241a1503}
+.app .smed-shell h2{font-size:17px;letter-spacing:-.035em;margin-bottom:14px}
+.app .smed-form{gap:14px}.app .smed-form label{gap:7px;font-size:11px;color:var(--muted)}
+.app .smed-form input,.app .smed-form select,.app .smed-actor{min-height:41px;border-radius:9px;padding:8px 10px;color:var(--ink)}
+.app .smed-check{font-size:11px;line-height:1.6}.app .smed-check input{accent-color:var(--accent)}
+.app .smed-btn{border-radius:9px;padding:9px 12px;font-size:11px;transition:background .15s,box-shadow .15s}
+.app .smed-btn:not(:disabled):hover{box-shadow:0 2px 8px #241a1510;border-color:var(--accent)}
+.app .smed-buttons{gap:8px;margin-top:16px}.app .smed-small{font-size:11px;line-height:1.75}
+.app .smed-badge{letter-spacing:.07em;font-size:9px;padding:5px 8px}
+.app .smed-kpi{background:var(--surface);border:0;padding:14px 10px;border-radius:11px}.app .smed-kpi strong{font-size:24px;letter-spacing:-.04em}
+.app .smed-chat{padding:0}.app .smed-chat-header{padding:24px;background:linear-gradient(120deg,var(--panel),var(--surface))}.app .smed-chat-header h2{font-size:21px;letter-spacing:-.045em}
+.app .smed-eyebrow{color:var(--accent);font-size:9px;letter-spacing:.17em}
+.app .smed-messages{padding:24px;gap:24px}.app .smed-message{font-size:13px;line-height:1.8}.app .smed-message.me{padding:12px 16px;background:var(--accent-soft);border-color:transparent}
+.app .smed-compose{margin:0 18px 4px;padding:9px;border-radius:13px;background:var(--panel);box-shadow:0 4px 12px #241a1505}
+.app .smed-send{border-radius:9px}.app .smed-chat-footnote{margin:9px 12px 16px}
+.app .smed-value{border-color:color-mix(in srgb,var(--accent) 30%,var(--line));background:var(--accent-soft);box-shadow:none}
+.app .smed-value-amount{font-size:clamp(28px,3vw,43px)}
+@media(min-width:761px) and (max-width:1250px){
+  .app{grid-template-columns:180px minmax(0,1fr)}.rail{padding-inline:10px}.brand{font-size:21px}.top{padding:16px 20px}.view{padding:20px}.panel{padding:18px}.grid2{gap:16px}
+  #scrub{width:90px}.player{gap:8px}.top h1{font-size:20px}
+  #view-pred>.grid2>.panel .pred{grid-template-columns:minmax(85px,1fr) 62px!important}
+  #view-pred>.grid2>.panel .pred .ci-cell{grid-column:1/-1;margin:0 3px 12px}
+}
+@media(max-width:1000px) and (min-width:761px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.step{padding:14px}.step-big{font-size:18px}}
+@media(max-width:760px){
+  body{padding:8px}.ipad{padding:0;border-radius:16px;box-shadow:none;background:none;border:0}.ipad::before{display:none}
+  .app{grid-template-columns:minmax(0,1fr);height:auto;max-height:none;min-height:0;border-radius:16px}
+  .rail{background:var(--panel);padding:8px;gap:5px;border:0;border-top:1px solid var(--line)}.tab{font-size:10px;padding:8px 7px;border-radius:9px}
+  .tab[aria-selected="true"]{box-shadow:none;background:var(--surface)}.top{padding:17px;gap:12px}.top h1{font-size:21px}.player{gap:9px}
+  .view{padding:16px 12px;gap:14px}.panel{padding:17px 15px;border-radius:14px}.grid2,.grid3,.steps,.finds{gap:14px}
+  .alert{padding:18px;gap:12px}.alert .big{text-align:left;min-width:0;font-size:34px}.step{padding:16px}
+  .app .smed-panel{padding:16px}.app .smed-chat{padding:0}.app .smed-chat-header{padding:18px}.app .smed-messages{padding:18px}
+}
+
+/* Readability for projected demos, retaining the iPad composition. */
+.tab{font-size:14px}.brand-sub{font-size:12px}.rail-foot{font-size:11px}
+.top h1{font-size:24px}.status{font-size:12px}.seg button{font-size:12px}
+.ph h2{font-size:17px}.ph .hint{font-size:12px;line-height:1.55}
+.lbl{font-size:11px;letter-spacing:.065em}.caption{font-size:12px}
+.alert h3{font-size:20px}.alert p{font-size:14px;line-height:1.65}.alert .act,.step .act{font-size:13px}
+.step-p{font-size:14px;line-height:1.6}.step-meta{font-size:12px}.step-act{font-size:14px}.step-big{font-size:23px}
+.pill{font-size:12px;line-height:1.4;padding:5px 9px}
+.prose,.note{font-size:14px;line-height:1.7}.legend,.flow-legend{font-size:12px}
+.kpi .d{font-size:13px}.st{font-size:12px}.st .code{font-size:11px}.st .n{font-size:18px;white-space:nowrap}.st.track{min-width:74px}
+.pred .nm{font-size:14px;line-height:1.5}.pred .nm small{font-size:12px;line-height:1.5}
+.ci .ticks{font-size:11px}.ci-txt{font-size:13px;line-height:1.6;margin-top:18px}
+#view-pred>.grid2>.panel .pred{grid-template-columns:minmax(90px,1.2fr) 72px minmax(75px,1fr)!important}
+#view-pred>.grid2>.panel .pred .ci-cell{grid-column:auto;margin:0 4px 9px}
+#view-pred>.grid2>.panel:nth-child(2) .pred{grid-template-columns:minmax(0,1fr) 72px!important}
+#view-pred>.grid2>.panel:nth-child(2) .pred .ci-cell{grid-column:1/-1;margin:0 4px 12px}
+.prm .name,.prm .val{font-size:14px}.prm .rng{font-size:11px}.params{gap:21px}
+.axis,.heat-y{font-size:11px}svg text{font-size:12px}
+.mrow{font-size:14px;padding:13px 11px;gap:10px}.mrow .pill{font-size:11px}
+.prob .hd{font-size:16px}.prob .sym,.prob .sol,.find p,.find .fix{font-size:14px;line-height:1.7}
+.prob .meta{font-size:12px}.find h3{font-size:16px}.todo{gap:9px}
+table.t td{font-size:14px;line-height:1.6}table.t th{font-size:12px}
+.app .smed-shell h2{font-size:19px}.app .smed-shell h3{font-size:15px}
+.app .smed-small{font-size:12px;line-height:1.7}.app .smed-form label,.app .smed-check{font-size:13px}
+.app .smed-form input,.app .smed-form select{font-size:14px}
+.app .smed-btn{font-size:13px}.app .smed-badge{font-size:11px}
+.app .smed-table,.app .smed-table .smed-btn{font-size:12px}.app .smed-table th{font-size:11px}
+.app .smed-chat-header p{font-size:12px}.app .smed-chat-header h2{font-size:23px}
+.app .smed-message,.app .smed-compose textarea{font-size:14px;line-height:1.75}
+.app .smed-chat-footnote{font-size:11px}.app .smed-timeline b{font-size:12px;width:150px}
+.app .smed-value p{font-size:13px}.app .smed-value-period{font-size:17px}
+@media(min-width:761px) and (max-width:1250px){
+  .top h1{font-size:22px}.view{padding:18px}.panel{padding:18px}
+  .steps{gap:12px}.step{padding:16px}.step-big{font-size:21px}
+  .step-h .lbl{font-size:10px}.ph{gap:8px}.ph h2{font-size:16px}
+}
+@media(max-width:760px){
+  .tab{font-size:11px}.top h1{font-size:22px}.caption{font-size:11px}
+  .step-big{font-size:23px}.ph h2{font-size:16px}.alert h3{font-size:19px}
+  .pred{row-gap:12px}.mrow{font-size:13px}
+  #view-pred>.grid2>.panel .pred{grid-template-columns:minmax(0,1fr) 72px!important}
+  #view-pred>.grid2>.panel .pred .ci-cell{grid-column:1/-1;margin:0 4px 12px}
+}
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 <style>
@@ -619,8 +749,7 @@ function onTap(id, fn) {
 }
 onTap("view-live", e => {
   const st = e.target.closest("[data-m]");
-  if (st) { S.sel = st.dataset.m; S.more = true; renderLive(R[S.i]); return; }
-  if (e.target.closest("#more")) { S.more = !S.more; renderLive(R[S.i]); return; }
+  if (st) { S.sel = st.dataset.m; renderLive(R[S.i]); return; }
   if (e.target.closest("#why")) { S.failSel = S.liveTop; go("fail"); }
 });
 onTap("view-fail", e => { const b = e.target.closest("[data-m]"); if (b) { S.failSel = b.dataset.m; renderFail(); } });
@@ -709,7 +838,7 @@ function heroOf(r, ps, dec, dg) {
   if (!r.run) return { lv: "warn", big: "■", h: r.s === "CLEAN" ? "Shift cleaning" : "Line stopped", p: "Forecasts resume when production restarts.", btn: false };
   if (ps.lv === "crit") return { lv: "crit", big: TEAM && r.c ? pct(r.c[0]) : "!", h: "Check the enrober now",
     p: TEAM ? "expected edge rejects in the upcoming 6–25 min window. Check the chocolate curtain at both edges." : `${ps.line} ${ps.act || ""}`, btn: true };
-  if (dg) return { lv: "crit", big: "▲", h: `Check ${MN[dg.m] || dg.m}`,
+  if (dg) return { lv: "crit", big: "!", h: `Check ${MN[dg.m] || dg.m}`,
     p: TEAM ? "Possible active fault. Inspect the machine and log findings." : `${driverText(dg.m, r)}`, btn: why };
   if (dec === "retener") return { lv: "warn", big: pct(r.r[0]), h: `Review product${r.rs ? " at " + (MN[r.rs] || r.rs) : ""}`,
     p: "High final reject rate expected for this production window. Ask the shift lead about holding product.", btn: false };
@@ -726,7 +855,7 @@ function renderLive(r) {
   const cRate = TEAM ? (r.c && r.c[0] != null ? pct(r.c[0]) : "—") : pct(r.pv[2]);
   el.innerHTML = `
     <div class="alert ${hero.lv}">
-      <div class="big num">${hero.big}</div>
+      <div class="big num${hero.big === "!" ? " notice-icon" : ""}">${hero.big}</div>
       <div><h3>${hero.h}</h3><p>${esc(hero.p)}</p></div>
       ${hero.btn ? `<button class="act" id="why">View checks</button>` : ""}
     </div>
@@ -743,7 +872,7 @@ function renderLive(r) {
       </div>
       <div class="step lv-${dg ? "crit" : "ok"}">
         <div class="step-h"><span class="step-n">B</span><span class="lbl">Machine to check</span></div>
-        <div class="step-big">${dg ? "▲ " + (MN[dg.m] || dg.m) : "None"}</div>
+        <div class="step-big">${dg ? (MN[dg.m] || dg.m) : "None"}</div>
         <p class="step-p">${dg ? "possible active fault" : "no active faults flagged"}</p>
       </div>
     </div>
@@ -751,19 +880,19 @@ function renderLive(r) {
       <div class="ph"><h2>Production line</h2><span class="hint">Rejects · last 15 min</span></div>
       <div class="flow">${STATIONS.map(s => {
         const kk = M.indexOf(s), flagged = dg && dg.m === s, cReq = s === "ENR" && ps.lv === "crit";
-        if (kk < 0) return `<div class="st passive ${flagged ? "hot" : ""}" title="${MN[s]}"><span class="code">${flagged ? "▲ " : ""}${s.replace("_", " ")}</span></div>`;
+        if (kk < 0) return `<div class="st passive ${flagged ? "hot" : ""}" title="${MN[s]}"><span class="code">${flagged ? "● " : ""}${s.replace("_", " ")}</span></div>`;
         const v = sumA(kk, S.i, 15);
-        return `<button class="st track ${v > 3000 || flagged ? "hot" : v > 600 || cReq ? "warm" : ""}" data-m="${s}" aria-pressed="${S.sel === s}"><span class="code">${flagged || cReq ? "▲ " : ""}${s}</span><span class="n">${fmt(v)}</span><span style="font-size:11px">${MN[s]}</span></button>`;
+        return `<button class="st track ${v > 3000 || flagged ? "hot" : v > 600 || cReq ? "warm" : ""}" data-m="${s}" aria-pressed="${S.sel === s}"><span class="code">${flagged || cReq ? "● " : ""}${s}</span><span class="n">${fmt(v)}</span><span style="font-size:11px">${MN[s]}</span></button>`;
       }).join("")}</div>
-      <div class="flow-legend"><span>▲ Check here</span><span>Select a machine for details</span></div>
+      <div class="flow-legend"><span>● Check here</span><span>Select a machine for details</span></div>
     </div>
     <div class="grid3">
       <div class="panel kpi"><div class="lbl">Scrap cost today</div><div class="v num">${fmt(dayBars * COST_PER_BAR)} $</div><div class="d">${fmt(dayBars)} rejects since 06:00</div></div>
       <div class="panel kpi"><div class="lbl">Line quality</div><div class="v num">${pct(q, 1)}</div><div class="d">good bars · last hour</div></div>
       <div class="panel kpi"><div class="lbl">Shift</div><div class="v num">${r.s === "CLEAN" ? "Cleaning" : r.s}</div><div class="d">${r.s === "A" ? "06:00–14:00" : r.s === "B" ? "14:30–22:30" : "14:00–14:30"}</div></div>
     </div>
-    <button class="more" id="more" aria-expanded="${!!S.more}">${S.more ? "Hide details ▴" : "Lanes & settings ▾"}</button>
-    ${S.more ? `<div class="grid2">
+    <div class="ph" style="margin-bottom:0"><h2>Lanes &amp; settings</h2><span class="hint">Live measurements</span></div>
+    <div class="grid2">
       <div class="panel">
         <div class="ph"><h2>Rejects by lane</h2><span class="hint">32 lanes · last hour · finished-bar laser</span></div>
         <div class="heat-box"><div class="heat-wrap"><div class="heat-y"><span>1</span><span>8</span><span>16</span><span>24</span><span>32</span></div><canvas id="heat" aria-label="Rejects by lane over time"></canvas></div>
@@ -773,7 +902,7 @@ function renderLive(r) {
         <div class="ph"><h2>${MN[S.sel]}</h2><span class="hint">${ROLE[S.sel]}</span></div>
         <div class="params">${paramsOf(S.sel).map(p => gauge(p, r.v[paramIdx[p.code]])).join("")}</div>
       </div>
-    </div>` : ""}`;
+    </div>`;
   drawHeat();
 }
 function driverText(m, r) {
@@ -843,7 +972,7 @@ function edgeChart(r) {
   const path = (k) => { let d = "", pen = false; for (let j = -back; j <= 0; j++) { const i = S.i + j; const v = i >= 0 && R[i].run ? R[i].pv[k] : null; if (v == null) { pen = false; continue; } d += (pen ? "L" : "M") + X(j).toFixed(1) + " " + Y(v).toFixed(1); pen = true; } return d; };
   const [h, sl] = r.pv;
   const proj = h != null && sl != null ? `<path d="M${X(0)} ${Y(h)} L${X(fwd)} ${Y(h + sl * fwd / 60)}" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 4" fill="none"/>` : "";
-  const ticks = [-180, -120, -60, 0, 60, 120].map(j => `<text x="${X(j)}" y="${H - 6}" text-anchor="middle">${j === 0 ? "now" : addMin(r.t, j)}</text>`).join("");
+  const ticks = [-180, -120, -60, 0, 60, 120].map(j => `<text x="${X(j)}" y="${H - 6}" text-anchor="${j === -back ? "start" : j === fwd ? "end" : "middle"}">${j === 0 ? "now" : addMin(r.t, j)}</text>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Edge and centre height over the last 3 hours">
     ${[16.6, 17.0, 17.5, 18.0].map(v => `<line x1="${padL}" x2="${W - padR}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${padL - 6}" y="${Y(v) + 3}" text-anchor="end">${fmt(v, 1)}</text>`).join("")}
     <rect x="${X(0)}" y="${padT}" width="${X(fwd) - X(0)}" height="${H - padT - padB}" fill="var(--heat0)" opacity=".6"/>
@@ -898,7 +1027,7 @@ function renderPredTeam(r) {
         <div class="ph"><h2><span class="step-n">B</span> Machine checks</h2><span class="hint">${dg ? "Flagged: " + (MN[dg.m] || dg.m) : "No machine above its threshold"}</span></div>
         <p class="prose" style="margin-bottom:8px">Top 3 fault scores. A machine is flagged only above its own threshold; this does not prove the cause.</p>
         ${bOrder.map(([m, p]) => `<div class="pred" style="grid-template-columns:150px 60px minmax(0,1fr)">
-          <div class="nm">${dg && dg.m === m ? "▲ " : ""}${MN[m] || m}</div>
+          <div class="nm">${dg && dg.m === m ? "● " : ""}${MN[m] || m}</div>
           <div class="pv num" style="font-size:20px;color:var(--${dg && dg.m === m ? "crit" : level(p)})">${pct(p)}</div>
           <div class="ci-cell">${ciBar([p, p, p], dg && dg.m === m ? "crit" : level(p))}</div></div>`).join("")}
       </div>
@@ -954,7 +1083,7 @@ function renderPred(r) {
       <div class="panel">
         <div class="ph"><h2><span class="step-n">3</span> Machine checks</h2><span class="hint">${dg ? "Flagged: " + MN[dg.m] : "No machine flagged"}</span></div>
         ${order.map(({ m, k, p }) => { const lv = level(p[0]); return `<div class="pred" style="grid-template-columns:150px 70px minmax(0,1fr)">
-          <div class="nm">${dg && dg.m === m ? "▲ " : ""}${MN[m]}<small>${driverText(m, r)}</small></div>
+          <div class="nm">${dg && dg.m === m ? "● " : ""}${MN[m]}<small>${driverText(m, r)}</small></div>
           <div class="pv num" style="font-size:26px;color:var(--${lv})">${pct(p[0])}</div>
           <div class="ci-cell">${ciBar(p, lv)}</div></div>`; }).join("")}
       </div>
@@ -1033,27 +1162,50 @@ function findings() {
   ];
 
 }
+function machineCheckState(machine, r) {
+  const diagnostic = diagOf(r);
+  if (diagnostic && diagnostic.m === machine)
+    return { level: "crit", label: "Review now", reason: "Model B flags a possible active machine incident. This is a diagnostic alert, not proof of the cause.", priority: 3 };
+  const codes = (r.ev || []).filter(code => D.problems[code]?.machine === machine);
+  if (codes.length)
+    return { level: "crit", label: "Active condition", reason: "A condition is recorded for this machine at the current replay minute.", priority: 3 };
+  if (machine === "ENR") {
+    const prevention = prevState(r);
+    if (prevention.lv === "crit" || prevention.lv === "warn")
+      return { level: prevention.lv, label: prevention.lv === "crit" ? "Review coating" : "Watch coating", reason: prevention.line, priority: prevention.lv === "crit" ? 3 : 2 };
+  }
+  const tracked = M.indexOf(machine);
+  if (tracked >= 0 && sumA(tracked, S.i, 15) > 3000)
+    return { level: "warn", label: "Quality review", reason: "High rejects attributed to this station in the last 15 minutes. Inspect product and settings; this does not establish the cause.", priority: 2 };
+  if (paramsOf(machine).some(p => devOf(p, r.v[paramIdx[p.code]]) > 1))
+    return { level: "warn", label: "Check settings", reason: "At least one available setting is outside its reference band. Verify the readings and approved recipe.", priority: 1 };
+  return { level: "mut", label: "No active alert", reason: "No current alert is available for this machine. This does not certify that the machine is fault-free.", priority: 0 };
+}
 function renderFail() {
   const el = document.getElementById("view-fail");
+  const r = R[S.i];
   const risk = D.risk, sel = risk.find(x => x.machine === S.failSel) || risk[0], m = sel.machine;
+  const current = machineCheckState(m, r);
+  const ranked = risk.map(x => ({ ...x, current: machineCheckState(x.machine, r) })).sort((a, b) => b.current.priority - a.current.priority);
   const items = (m === "ENR" ? [{ code: "ENR-EDGE" }] : []).concat(sel.problems.slice(0, 3));
-  const [lv, word] = chance(sel.p_shift);
+  const [, historicalWord] = chance(sel.p_shift);
   el.innerHTML = `
     <div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.7fr)">
       <div class="panel">
         <div class="ph"><h2>Select a machine</h2></div>
-        <div class="mlist">${risk.map(x => { const [l, w] = chance(x.p_shift); return `<button class="mrow" style="grid-template-columns:minmax(0,1fr) auto" data-m="${x.machine}" aria-pressed="${x.machine === m}">
-          <span><b>${MN[x.machine] || x.name}</b></span><span class="pill p-${l}">${w}</span></button>`; }).join("")}</div>
-        <p class="note" style="margin-top:8px">Historical stop likelihood per shift.</p>
+        <div class="mlist">${ranked.map(x => `<button class="mrow" style="grid-template-columns:minmax(0,1fr) auto" data-m="${x.machine}" aria-pressed="${x.machine === m}">
+          <span><b>${MN[x.machine] || x.name}</b></span><span class="pill p-${x.current.level}">${x.current.label}</span></button>`).join("")}</div>
+        <p class="note" style="margin-top:8px">Current replay alerts · quality and machine checks. Machines needing review appear first.</p>
       </div>
       <div class="panel">
-        <div class="ph"><h2>${MN[m] || sel.name}</h2><span class="pill p-${lv}">Stop likelihood: ${word}</span></div>
-        <p class="prose" style="margin-bottom:4px">${DOES[m] || ""}. ${fmt(sel.events)} recorded stops in 13 weeks.</p>
+        <div class="ph"><h2>${MN[m] || sel.name}</h2><span class="pill p-${current.level}">${current.label}</span></div>
+        <p class="prose" style="margin-bottom:8px">${DOES[m] || ""}. ${esc(current.reason)}</p>
         ${items.map(p => { const e = EASY[p.code] || ["Recorded fault", "", ["Contact the shift lead."]];
-          return `<div class="prob"><div class="hd"><span>${e[0]}</span>${p.n ? `<span class="meta">${fmt(p.n)} events</span>` : `<span class="pill p-warn">App alert</span>`}</div>
+          return `<div class="prob"><div class="hd"><span>${e[0]}</span>${p.n ? `<span class="meta">${fmt(p.n)} historical events</span>` : `<span class="pill p-${activeCodes.includes(p.code) ? current.level : "mut"}">${activeCodes.includes(p.code) ? "Recorded this minute" : "Reference checks"}</span>`}</div>
           ${e[1] ? `<div class="sym"><b>Signs:</b> ${e[1]}</div>` : ""}
           <div class="sol"><b>Checks:</b><ol class="todo">${e[2].map(x => `<li>${x}</li>`).join("")}</ol></div></div>`; }).join("")}
         <p class="find fix" style="margin-top:10px">Unresolved after 10 minutes, or unsure? <b>Contact the shift lead.</b> Use approved procedures and get approval before changing settings.</p>
+        <details style="margin-top:18px"><summary>Historical stop context</summary><p class="note">${fmt(sel.events)} recorded stops in 13 weeks. Historical stop likelihood per shift: ${pct(sel.p_shift)} (${historicalWord}). This historical context does not describe the current quality or machine alert.</p></details>
       </div>
     </div>
     <details class="panel"><summary>Historical patterns</summary>
