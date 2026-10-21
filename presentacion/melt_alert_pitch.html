@@ -34,9 +34,9 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
 .num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* escenas y apariciones */
-.scene { position: absolute; inset: 0; padding: 110px 130px 120px; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s; display: flex; flex-direction: column; gap: 40px; }
-.scene.active { opacity: 1; visibility: visible; transition: opacity .6s ease, visibility 0s; }
-[data-s] { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+.scene { position: absolute; inset: 0; padding: 110px 130px 120px; opacity: 0; visibility: hidden; pointer-events: none; display: flex; flex-direction: column; gap: 40px; }
+.scene.active { opacity: 1; visibility: visible; pointer-events: auto; }
+[data-s] { opacity: 0; transition: opacity .38s cubic-bezier(.2,0,.2,1); }
 [data-s].in { opacity: 1; transform: none; }
 [data-s].fade { transform: none; }
 .eyebrow { font-family: var(--mono); font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -627,9 +627,28 @@ table.kp td.g { color: var(--gain); }
   const maxStep = sc => Math.max(0, ...[...sc.querySelectorAll("[data-s]")].map(e => +e.dataset.s));
   const dots = document.getElementById("dots");
   dots.innerHTML = scenes.map(() => "<i></i>").join("");
+  let renderedSlide = null;
+  let slideAnimations = [];
   function render() {
+    const changed = renderedSlide !== null && renderedSlide !== si;
+    const previousSlide = renderedSlide;
+    if (changed) {
+      slideAnimations.forEach(animation => animation.cancel());
+      slideAnimations = [];
+    }
     scenes.forEach((sc, i) => sc.classList.toggle("active", i === si));
     const sc = scenes[si];
+    if (changed && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      slideAnimations.push(scenes[previousSlide].animate([
+        { opacity: 1, visibility: "visible" },
+        { opacity: 0, visibility: "visible" }
+      ], { duration: 170, easing: "cubic-bezier(.4,0,1,1)" }));
+      slideAnimations.push(sc.animate([
+        { opacity: 0 },
+        { opacity: 1 }
+      ], { delay: 180, duration: 300, fill: "backwards", easing: "cubic-bezier(0,0,.2,1)" }));
+    }
+    renderedSlide = si;
     sc.querySelectorAll("[data-s]").forEach(e => {
       const on = +e.dataset.s <= step;
       e.classList.toggle("in", on);
