@@ -216,7 +216,7 @@ svg text { font-family: var(--mono); fill: var(--muted); }
 table.kp { width: 100%; border-collapse: collapse; font-size: 26px; }
 table.kp th { text-align: left; font-family: var(--mono); font-size: 18px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .08em; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 table.kp td { padding: 12px 14px; border-bottom: 1px solid var(--line); }
-table.kp td.n { font-family: var(--mono); white-space: nowrap; }
+table.kp td.n { font-family: var(--body); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 table.kp td.g { color: var(--gain); }
 
 /* 12 · cierre */
@@ -400,7 +400,7 @@ table.kp td.g { color: var(--gain); }
   <section class="scene" data-title="Escala" data-notes="Esto es visión de futuro, no líneas que existan hoy: el caso solo describe la línea Xocoleta. La idea es que Melt Alert no está hecho a medida de una línea; si Fandonat lo lleva a otras líneas, en esta u otras plantas, con la misma limpieza diaria y un margen por hora parecido, cada una aportaría ≈ 1,5 M $ al año. Es un potencial condicionado: supone que el 100 % de los minutos recuperados vuelve a producir y que esa producción se vende. Solo contamos la limpieza; el scrap iría aparte porque los modelos se reentrenan con el histórico de cada línea. No hacen falta sensores nuevos.">
     <div class="eyebrow">Visión de futuro · escalar el proyecto</div>
     <h2>Si llevamos Melt Alert a más líneas, <strong class="g">ganaríamos</strong> mucho más</h2>
-    <div class="scale-legend"><span class="tag2" style="font-size:22px;background:var(--cocoa);color:#ffffff;padding:6px 16px;margin-left:0">Calculado con el ahorro de la limpieza de las 14:00</span><span><i style="background:var(--gain)"></i>Hoy: la línea Xocoleta</span><span><i style="background:repeating-linear-gradient(135deg,#e3f1e8 0 6px,#cfe6d7 6px 12px);border:2px dashed var(--gain)"></i>Escenario de escalado: líneas nuevas a las que llevaríamos la app</span><span class="tag2 t-pot" style="font-size:20px">potencial condicionado</span></div>
+    <div class="scale-legend"><span class="tag2" style="font-size:22px;background:var(--cocoa);color:#ffffff;padding:6px 16px;margin-left:0">Calculado con el ahorro de la limpieza de las 14:00</span><span class="tag2 t-pot" style="font-size:20px">potencial condicionado</span></div>
     <div class="scale" id="scale">
       <div class="sc"><div class="v num" data-s="1">1,5 M $</div><div class="bar" data-h="5"></div><div class="n"><b>Hoy</b><br>línea Xocoleta</div></div>
       <div class="sc future"><div class="v num" data-s="2">7,6 M $</div><div class="bar" data-h="25"></div><div class="n"><b>Escalando</b><br>a 5 líneas</div></div>
