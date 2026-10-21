@@ -224,6 +224,11 @@ table.kp td.g { color: var(--gain); }
 .close h2 { font-size: 64px; max-width: 1650px; }
 .closeline { font-family: var(--display); font-weight: 700; font-size: 104px; line-height: 1.05; letter-spacing: .005em; }
 .closeline span { white-space: nowrap; }
+.thanks-lockup{display:flex;align-items:center;gap:30px;width:100%;padding-top:22px;border-top:1px solid var(--line)}
+.thanks-word{font-family:var(--display);font-weight:700;font-size:94px;line-height:1;letter-spacing:-.025em;color:var(--cocoa)}
+.thanks-word span{color:var(--gain)}
+.thanks-caption{padding-left:30px;border-left:2px solid var(--line);font-size:24px;line-height:1.5;color:var(--muted)}
+.thanks-caption b{display:block;color:var(--ink);font-size:28px;letter-spacing:.02em}
 .arrow { display: flex; align-items: center; gap: 40px; }
 .arrow .big { font-size: 150px; }
 .arrow .to { font-size: 90px; color: var(--muted); }
@@ -430,7 +435,7 @@ table.kp td.g { color: var(--gain); }
     <div class="closeline" data-s="1">De <span class="loss">7,2 M $</span> perdidos al año,<br>recuperamos <span class="gain">hasta 2 M $</span></div>
     <h2 data-s="2">De pérdidas que nadie ve a <strong class="g">dinero recuperado</strong> cada día</h2>
     <p class="since" data-s="3">Mientras os lo contábamos, la línea ha perdido<b class="num" id="since2">0,00 USD</b></p>
-    <p class="lead" data-s="4" style="color:var(--ink);font-size:44px">Gracias.</p>
+    <div class="thanks-lockup" data-s="4"><div class="thanks-word">Gracias<span>.</span></div><div class="thanks-caption"><b>Melt Alert</b>Menos desperdicio. Mejores decisiones.</div></div>
   </section>
 
   <aside class="notes" id="notes" hidden><h4 id="notes-t">Notas</h4><div id="notes-b"></div></aside>

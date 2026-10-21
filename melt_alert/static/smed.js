@@ -125,7 +125,7 @@ window.SMED = (() => {
       <p class="smed-small">*Requires quality release, staff and materials.</p>
       <div class="smed-overflow">${p.rows.map(r=>`<div class="smed-timeline"><b>${esc(r.description)}</b><div class="smed-track"><i style="left:${(toMin(r.start)-min)/span*100}%;width:${(toMin(r.end)-toMin(r.start))/span*100}%" title="${esc(r.start+'–'+r.end)}"></i></div><span class="smed-small">${esc(r.start+'–'+r.end)}</span></div>`).join('')}</div>
       <details><summary>Assignments & assumptions</summary><table class="smed-table">${p.rows.map(r=>`<tr><td>${esc(r.description)}</td><td>${esc(r.resources.map(resourceName).join(', '))}</td><td>${esc(r.start)}–${esc(r.end)}</td></tr>`).join('')}</table><p class="smed-small">${p.assumptions.map(esc).join('<br>')}<br>Resource-constrained schedule; a shorter feasible plan may exist.</p></details>
-      ${p.impact?`<details><summary>Potential value</summary><p class="smed-small">${money(p.impact.net_conditional_potential_usd)} over ${p.impact.days} days at full utilization, with no added costs and an assumed 25,000 USD/h margin. Potential value, not realized savings.</p></details>`:''}`;
+      ${p.impact?`<section class="smed-value" aria-label="Potential value"><span class="smed-value-label">Potential value</span><strong class="smed-value-amount">${money(p.impact.net_conditional_potential_usd)}</strong><span class="smed-value-period">over ${esc(p.impact.days)} production days</span><p>Conditional estimate · 100% utilization · 25,000 USD/h margin · no added costs. Potential value, not realized savings.</p></section>`:''}`;
   }
   async function ask(question){
     if(chatting||!health.ai)return;
