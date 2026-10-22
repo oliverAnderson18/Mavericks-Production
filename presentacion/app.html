@@ -571,6 +571,12 @@ window.SMED = (() => {
         <button class="smed-btn" data-action="record_stop" ${s.stopped_at?'disabled':''}>Log line stop</button><button class="smed-btn" data-action="new">New session</button></div>
         <p class="smed-small">Stop: ${esc(s.stopped_at||'pending')} · Restart: ${esc(s.restarted_at||'pending')}</p>
       </div>
+      <div class="smed-panel"><h2>Tasks</h2><p class="smed-small">Log actual progress using the scenario clock. Dependencies and minimum durations must be met.</p>
+        <div class="smed-overflow"><table class="smed-table"><thead><tr><th>Task</th><th>Status / team</th><th>Progress</th></tr></thead><tbody>
+        ${snapshot.tasks.map(t=>{const a=s.tasks[t.task_id]||{status:'pending'};return `<tr><td><b>${esc(t.description)}</b><br><span class="smed-small">${t.phase==='internal'?'During stop':'Before stop'} · ${t.duration_min} min</span>${t.predecessors.length?`<details class="smed-small"><summary>Prerequisites</summary>${esc(t.predecessors.map(taskName).join(', '))}</details>`:''}</td>
+          <td>${statusName[a.status]}<br><span class="smed-small">${esc(a.resources?.map(resourceName).join(', ')||'—')} ${esc(a.started_at||'')} ${a.completed_at?'→ '+esc(a.completed_at):''}</span></td>
+          <td><button class="smed-btn" data-start="${t.task_id}" ${a.status!=='pending'?'disabled':''}>Start</button> <button class="smed-btn" data-finish="${t.task_id}" ${a.status!=='in_progress'?'disabled':''}>Finish</button></td></tr>`;}).join('')}
+        </tbody></table></div></div>
       <div class="smed-panel"><h2>Compare plans</h2><div class="smed-form">
         <label>Stop time · 14:00–14:10<input id="smed-stop" type="time" value="${esc(draft.stop_at)}"></label>
         <label>Staff & materials ready at<input id="smed-ready" type="time" value="${esc(draft.production_ready_at)}"></label>
@@ -581,12 +587,6 @@ window.SMED = (() => {
         </div><h3>Available teams</h3><div class="smed-form">${snapshot.resources.map(r=>`<label class="smed-check"><input data-resource="${r.resource_id}" type="checkbox" ${draft.unavailable_resources.includes(r.resource_id)?'':'checked'}>${esc(r.name)}</label>`).join('')}</div>
         <div class="smed-buttons"><button class="smed-btn primary" data-action="plan">Simulate plan</button><button class="smed-btn" data-action="settings">Save availability</button></div>
         <p class="smed-small">Simulation only. An earlier restart also needs staff and materials before 14:30.</p><div id="smed-plan"></div></div>
-      <div class="smed-panel"><h2>Tasks</h2><p class="smed-small">Log actual progress using the scenario clock. Dependencies and minimum durations must be met.</p>
-        <div class="smed-overflow"><table class="smed-table"><thead><tr><th>Task</th><th>Status / team</th><th>Progress</th></tr></thead><tbody>
-        ${snapshot.tasks.map(t=>{const a=s.tasks[t.task_id]||{status:'pending'};return `<tr><td><b>${esc(t.description)}</b><br><span class="smed-small">${t.phase==='internal'?'During stop':'Before stop'} · ${t.duration_min} min</span>${t.predecessors.length?`<details class="smed-small"><summary>Prerequisites</summary>${esc(t.predecessors.map(taskName).join(', '))}</details>`:''}</td>
-          <td>${statusName[a.status]}<br><span class="smed-small">${esc(a.resources?.map(resourceName).join(', ')||'—')} ${esc(a.started_at||'')} ${a.completed_at?'→ '+esc(a.completed_at):''}</span></td>
-          <td><button class="smed-btn" data-start="${t.task_id}" ${a.status!=='pending'?'disabled':''}>Start</button> <button class="smed-btn" data-finish="${t.task_id}" ${a.status!=='in_progress'?'disabled':''}>Finish</button></td></tr>`;}).join('')}
-        </tbody></table></div></div>
       <div class="smed-panel"><h2>Restart checks</h2>
         <label class="smed-check"><input id="smed-staff" type="checkbox" ${s.staff_ready?'checked':''}>Production staff ready</label>
         <label class="smed-check"><input id="smed-material" type="checkbox" ${s.material_ready?'checked':''}>Materials ready</label>
