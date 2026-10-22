@@ -129,11 +129,18 @@ svg text { font-family: var(--mono); fill: var(--muted); }
 .quote small { display: block; font-style: normal; font-size: 22px; color: var(--muted); margin-top: 8px; }
 
 /* 5 · solución */
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; flex: 1; }
-.part { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 44px 48px; display: flex; flex-direction: column; gap: 18px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.part { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 32px 40px; display: flex; flex-direction: column; gap: 12px; }
 .part .tag { font-family: var(--mono); font-size: 22px; letter-spacing: .12em; text-transform: uppercase; color: var(--cocoa); }
-.part h3 { font-family: var(--display); font-size: 64px; line-height: 1; }
-.part p { margin: 0; font-size: 28px; line-height: 1.45; color: var(--muted); }
+.part h3 { font-family: var(--display); font-size: 50px; line-height: 1.05; }
+.part p { margin: 0; font-size: 25px; line-height: 1.45; color: var(--muted); }
+.ethics { background: var(--cocoa-soft); border-radius: 22px; padding: 30px 40px 34px; }
+.ethics-h { display: flex; align-items: baseline; gap: 26px; margin-bottom: 20px; flex-wrap: wrap; }
+.ethics-h .tag { font-family: var(--mono); font-size: 20px; letter-spacing: .12em; text-transform: uppercase; color: var(--cocoa); }
+.ethics-h h3 { font-family: var(--display); font-size: 44px; line-height: 1; }
+.ethics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 34px; }
+.ethics-grid b { display: block; font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.ethics-grid p { margin: 0; font-size: 21px; line-height: 1.45; color: var(--muted); }
 .pill { display: inline-block; font-size: 24px; padding: 10px 22px; border-radius: 99px; background: var(--cocoa-soft); color: var(--cocoa); border: 1px solid #d8c2b3; }
 
 /* 6 · modelos */
@@ -213,6 +220,27 @@ svg text { font-family: var(--mono); fill: var(--muted); }
 .phase .w { font-family: var(--mono); font-size: 19px; color: var(--muted); }
 .phase h3 { font-family: var(--display); font-size: 46px; margin: 6px 0 8px; }
 .phase p { margin: 0; font-size: 22px; line-height: 1.4; color: var(--muted); }
+.sol-scene { gap: 32px; }
+.sol-scene h2 { font-size: 72px; white-space: nowrap; }
+.roi-scene { gap: 30px; }
+.roi-scene h2 { font-size: 78px; white-space: nowrap; }
+.roi-scene .phase { padding: 16px 22px 18px; }
+.roi-scene .phase h3 { font-size: 38px; margin: 4px 0 6px; }
+.roi-scene .phase p { font-size: 19px; }
+.money2 { display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; }
+.pnl { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px 30px; }
+.pnl .tag { font-family: var(--mono); font-size: 19px; letter-spacing: .12em; text-transform: uppercase; color: var(--cocoa); display: block; margin-bottom: 12px; }
+table.inv { width: 100%; border-collapse: collapse; font-size: 22px; }
+table.inv td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.inv td.n { text-align: right; font-family: var(--mono); white-space: nowrap; padding-left: 16px; }
+table.inv tr.tot td { font-weight: 700; font-size: 24px; }
+table.inv tr.yr td { color: var(--muted); font-size: 20px; border-bottom: 0; }
+.ret { display: grid; grid-template-columns: 1fr 1fr; }
+.ret > div + div { border-left: 1px solid var(--line); padding-left: 30px; }
+.ret .lab { font-family: var(--mono); font-size: 17px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ret .x { font-family: var(--display); font-weight: 700; font-size: 96px; line-height: 1; margin-top: 10px; }
+.ret .sub { font-size: 20px; color: var(--muted); }
+.ret .pb { font-family: var(--display); font-weight: 700; font-size: 46px; line-height: 1; margin-top: 18px; }
 table.kp { width: 100%; border-collapse: collapse; font-size: 26px; }
 table.kp th { text-align: left; font-family: var(--mono); font-size: 18px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .08em; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 table.kp td { padding: 12px 14px; border-bottom: 1px solid var(--line); }
@@ -326,14 +354,22 @@ table.kp td.g { color: var(--gain); }
   </section>
 
   <!-- 5 · SOLUCIÓN -->
-  <section class="scene" data-title="Solución" data-notes="Una sola app para el operario con las dos soluciones. Usa los datos por minuto que la línea ya genera: no hay que instalar sensores. Recomienda, nunca acciona máquinas; decide siempre una persona.">
+  <section class="scene sol-scene" data-title="Solución" data-notes="Una sola app para el operario con las dos soluciones. Ética: la IA ayuda al operario, no lo sustituye. Nadie pierde su puesto (los minutos recuperados son más producción); siempre decide una persona; solo usa datos de máquinas, en local y sin sensores nuevos; y hasta ≈ 2,7 M barras al año menos a la basura.">
     <div class="eyebrow">La solución</div>
     <h2>Melt Alert: <strong>una app</strong> para el operario, <strong>dos soluciones</strong></h2>
     <div class="two">
       <div class="part" data-s="1"><span class="tag">Parte 1 · Scrap</span><h3>Detectar el scrap antes del final de la línea</h3><p>Tres modelos de IA: uno previene el defecto de la enrobadora, otro estima el riesgo de cada lote y otro dice qué máquina revisar.</p></div>
       <div class="part" data-s="2"><span class="tag">Parte 2 · Limpieza</span><h3>Bajar la limpieza de 30 a 16 minutos, con objetivo de 15</h3><p>Planificador SMED: preparar antes, limpiar en paralelo y hacer el relevo con la línea en marcha. Sin quitar ningún paso de higiene.</p></div>
     </div>
-    <div data-s="3"><span class="pill">Recomienda, nunca acciona máquinas · siempre decide una persona · sin sensores nuevos</span></div>
+    <div class="ethics" data-s="3">
+      <div class="ethics-h"><span class="tag">Ética · uso responsable</span><h3>La IA ayuda al operario, no lo sustituye</h3></div>
+      <div class="ethics-grid">
+        <div><b>Nadie pierde su puesto</b><p>Los minutos recuperados son más producción, no menos plantilla. Las mismas personas, con mejor información.</p></div>
+        <div><b>Siempre decide una persona</b><p>La app recomienda y explica por qué; nunca acciona máquinas. Retener, revisar o arrancar lo confirma el operario.</p></div>
+        <div><b>Datos de máquinas, no de personas</b><p>No mide ni puntúa a nadie. La IA funciona en local: los datos no salen de la fábrica. Sin sensores nuevos.</p></div>
+        <div><b>Impacto positivo</b><p>Menos urgencias y trabajo más seguro. Hasta ≈ 2,7 M barras al año menos a la basura. Formación incluida y relevo pactado con los trabajadores.</p></div>
+      </div>
+    </div>
   </section>
 
   <!-- 6 · MODELOS -->
@@ -411,22 +447,34 @@ table.kp td.g { color: var(--gain); }
   </section>
 
   <!-- 11 · HOJA DE RUTA -->
-  <section class="scene" data-title="Hoja de ruta" data-notes="Cada fase empieza solo si la anterior pasa su control: calidad valida que no se pierde ningún paso de higiene y el ahorro se mide con los datos de la línea.">
-    <div class="eyebrow">Hoja de ruta</div>
-    <h2>Un piloto medible en <strong>12 semanas</strong></h2>
+  <section class="scene roi-scene" data-title="Hoja de ruta" data-notes="Invertimos unos 175.000 $ (estimación nuestra) para recuperar hasta 2 M $ al año. Si todo se cumple, el ROI del primer año es de unas 7 veces (1,8 M $ netos) y se recupera en un mes tras el piloto. En el caso conservador, sin el modelo C y vendiendo solo la mitad de la producción recuperada, sigue siendo 2,3 veces y unos 3 meses. Cada fase empieza solo si calidad valida la higiene.">
+    <div class="eyebrow">Hoja de ruta · Inversión · ROI</div>
+    <h2>Invertir <span style="color:var(--cocoa)">175.000 $</span> para recuperar <strong class="g">hasta 2 M $ al año</strong></h2>
     <div class="road">
-      <div class="phase" data-s="1"><div class="w">Semanas 1–4</div><h3>1 · Medir</h3><p>Registrar cada tarea con la app (QR por estación) y sustituir los tiempos simulados por reales.</p></div>
+      <div class="phase" data-s="1"><div class="w">Semanas 1–4</div><h3>1 · Medir</h3><p>Registrar cada tarea (QR por estación) y cada alerta. Tiempos reales en vez de simulados.</p></div>
       <div class="phase" data-s="2"><div class="w">Semanas 5–8</div><h3>2 · SMED</h3><p>Kits antes del paro y tres equipos en paralelo. Calidad valida cada cambio.</p></div>
-      <div class="phase" data-s="3"><div class="w">Semanas 9–12</div><h3>3 · Relevo y cortina</h3><p>Turno B listo a las 14:15 y reajuste de la cortina disparado por el modelo C.</p></div>
-      <div class="phase" data-s="4"><div class="w">Trimestre 2+</div><h3>4 · Escalar</h3><p>Despliegue por oleadas, empezando por las líneas con más margen por hora.</p></div>
+      <div class="phase" data-s="3"><div class="w">Semanas 9–12</div><h3>3 · Relevo y cortina</h3><p>Turno B listo a las 14:15; reajuste de la cortina disparado por el modelo C.</p></div>
+      <div class="phase" data-s="4"><div class="w">Trimestre 2+</div><h3>4 · Escalar</h3><p>Por oleadas, empezando por las líneas con más margen por hora.</p></div>
     </div>
-    <table class="kp" data-s="5">
-      <tr><th>Indicador</th><th>Hoy</th><th>Meta</th></tr>
-      <tr><td>Minutos de limpieza al día</td><td class="n">30</td><td class="n g">15 (la demo ya llega a 16)</td></tr>
-      <tr><td>OEE con la limpieza incluida</td><td class="n">91,4 %</td><td class="n g">≈ 92,9 %</td></tr>
-      <tr><td>Coste de scrap de barra terminada</td><td class="n">296.002 $ / trimestre</td><td class="n g">hasta −6,7 % con A + B · hasta −40 % con C</td></tr>
-      <tr><td>Pasos de higiene cumplidos</td><td class="n">100 %</td><td class="n g">100 %</td></tr>
-    </table>
+    <div class="money2">
+      <div class="pnl" data-s="5"><span class="tag">Inversión · línea Xocoleta</span>
+        <table class="inv">
+          <tr><td>Integración de datos y despliegue en planta</td><td class="n">60.000 $</td></tr>
+          <tr><td>Equipo del piloto, 12 semanas</td><td class="n">90.000 $</td></tr>
+          <tr><td>Hardware: tablets, QR y servidor local de IA</td><td class="n">15.000 $</td></tr>
+          <tr><td>Formación de operarios</td><td class="n">10.000 $</td></tr>
+          <tr class="tot"><td>Inversión inicial</td><td class="n">175.000 $</td></tr>
+          <tr class="yr"><td>Cada año: soporte y reentreno (40.000 $) + relevo 15 min antes (39.000 $)</td><td class="n">≈ 80.000 $/año</td></tr>
+        </table>
+      </div>
+      <div class="pnl" data-s="6"><span class="tag">Retorno · primer año</span>
+        <div class="ret">
+          <div><div class="lab">Potencial · todo se cumple</div><div class="x gain">≈ 7×</div><div class="sub">ROI · 1,8 M $ netos</div><div class="pb">≈ 1 mes</div><div class="sub">de payback</div></div>
+          <div><div class="lab">Conservador · sin modelo C</div><div class="x">≈ 2,3×</div><div class="sub">ROI · 0,58 M $ netos</div><div class="pb">≈ 3 meses</div><div class="sub">de payback</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot" style="font-size:17px;line-height:1.45">Costes: estimación nuestra. Potencial: A + B 79.000 $ + C 450.000 $ + limpieza 1,52 M $. Conservador: sin modelo C y solo se vende la mitad de la producción recuperada. ROI = beneficio neto del año 1 / (inversión + coste anual). Payback desde el fin del piloto. Cada fase empieza solo si calidad valida la higiene.</div>
   </section>
 
   <!-- 12 · CIERRE -->
