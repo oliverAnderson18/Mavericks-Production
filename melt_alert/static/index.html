@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>if(new URLSearchParams(location.search).get('presentation')==='1')document.documentElement.classList.add('presentation-embed');</script>
 </head>
 <body>
 <title>Melt Alert</title>
@@ -338,6 +339,11 @@ table.t th{font-size:10px;padding:10px}table.t td{padding:12px 10px;font-size:12
 }
 
 /* Readability for projected demos, retaining the iPad composition. */
+.presentation-embed body{padding:4px!important;overflow:hidden}
+.presentation-embed .caption{display:none}
+.presentation-embed .stage{max-width:none;gap:0}
+.presentation-embed .ipad{padding:14px;border-radius:32px;box-shadow:none;background:#1c1b1d;border:1px solid #454347}
+.presentation-embed .app{height:calc(100dvh - 38px);max-height:none;min-height:0;border-radius:18px}
 .tab{font-size:14px}.brand-sub{font-size:12px}.rail-foot{font-size:11px}
 .top h1{font-size:24px}.status{font-size:12px}.seg button{font-size:12px}
 .ph h2{font-size:17px}.ph .hint{font-size:12px;line-height:1.55}

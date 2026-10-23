@@ -162,11 +162,13 @@ svg text { font-family: var(--mono); fill: var(--muted); }
 .reco .tri { width: 0; height: 0; border-left: 26px solid transparent; border-right: 26px solid transparent; border-bottom: 44px solid var(--loss); }
 
 /* 7 · demo */
-.demo { padding: 80px 90px 70px; gap: 18px; }
+.demo { padding: 84px 24px 62px; gap: 14px; }
 .ipad { flex: 1; border-radius: 24px; overflow: hidden; box-shadow: 0 24px 60px rgba(36,26,21,.16), 0 0 0 1px var(--line); position: relative; background: #e9ebe8; }
 .ipad iframe, .ipad img { width: 100%; height: 100%; border: 0; background: #f8f8f6; display: block; object-fit: cover; object-position: top; }
+.demo .ipad { min-height: 0; flex-basis: 0; }
+.demo .ipad iframe { position: absolute; inset: 0; width: calc(100% / var(--demo-zoom, 1.25)); height: calc(100% / var(--demo-zoom, 1.25)); transform: scale(var(--demo-zoom, 1.25)); transform-origin: top left; }
 .demo-h { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
-.demo-h h2 { font-size: 64px; }
+.demo-h h2 { font-size: 44px; }
 .demo-h p { margin: 0; font-size: 22px; color: var(--muted); font-family: var(--mono); }
 
 /* 8 · limpieza */
@@ -507,6 +509,8 @@ table.kp td.g { color: var(--gain); }
     stage.style.left = "50%"; stage.style.top = "50%";
     stage.style.transform = `translate(-50%, -50%) scale(${s})`;
     stage.style.transformOrigin = "center center";
+    // Keep the app readable when the slide itself shrinks to fit a laptop/projector.
+    stage.style.setProperty("--demo-zoom", Math.max(1.25, 1 / Math.max(s, .1)));
   }
   addEventListener("resize", fit); fit();
 
@@ -611,7 +615,9 @@ table.kp td.g { color: var(--gain); }
     const fr = document.getElementById("app"), mode = document.getElementById("appmode");
     if (!LOCAL) return loadReplica();
     fetch(LIVE_URL + "api/health", { mode: "no-cors", cache: "no-store" }).then(() => {
-      fr.src = LIVE_URL;
+      const appUrl = new URL(LIVE_URL);
+      appUrl.searchParams.set("presentation", "1");
+      fr.src = appUrl.href;
       mode.textContent = "App completa en directo · con el asistente de IA";
     }).catch(loadReplica);
   }
@@ -619,8 +625,7 @@ table.kp td.g { color: var(--gain); }
     const fr = document.getElementById("app"), img = document.getElementById("appimg");
     fetch("app.html").then(r => { if (!r.ok) throw 0; return r.text(); }).then(html => {
       // la app ocupa todo el marco: sin el pie de foto y sin el ancho máximo del modo escritorio
-      const fitCss = "<style>body{padding:10px!important}.caption{display:none!important}.stage{max-width:none!important}.ipad{padding:14px!important;border-radius:28px!important;box-shadow:none!important}.app{height:calc(100vh - 48px)!important;max-height:none!important;min-height:0!important}</style>";
-      fr.srcdoc = html.replace("</head>", fitCss + "</head>").replace(/<body>/, m => html.includes("</head>") ? m : fitCss + m);
+      fr.srcdoc = html.replace('<html lang="en">', '<html lang="en" class="presentation-embed">');
       fr.addEventListener("load", () => {
         try { fr.contentWindow.addEventListener("keydown", e => { if (["PageDown", "PageUp"].includes(e.key)) { e.preventDefault(); e.key === "PageDown" ? next() : prev(); } }); } catch (e) {}
       }, { once: true });
